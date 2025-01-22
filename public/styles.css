@@ -1,0 +1,41 @@
+body {
+    background-color: #c7c7c7c9;
+    margin: 0;
+    padding: 20px;
+    overflow-x: hidden;
+}
+
+.grid {
+    margin: 0 auto;
+    width: calc(100% - 40px); /* Account for body padding */
+}
+
+.grid-item {
+    width: 200px;
+    margin-bottom: 15px;
+}
+
+.grid-item.horizontal {
+    width: 400px;
+}
+
+.grid-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.grid-item img:hover {
+    transform: scale(1.05);
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .grid-item,
+    .grid-item.horizontal {
+        width: 100%;
+        max-width: 400px;
+    }
+}
