@@ -153,7 +153,8 @@ async function buildAncestorPath(
 /** Ask Haiku to curate subtopics from Wikipedia links. */
 async function curateSubtopics(
   topic: string,
-  exclude: string[]
+  exclude: string[],
+  retries = 2
 ): Promise<SubtopicsJson> {
   try {
     const res = await fetch('/api/subtopics', {
@@ -161,7 +162,15 @@ async function curateSubtopics(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ topic, exclude }),
     });
-    if (!res.ok) return { titles: [], edges: [] };
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      console.error(`[subtopics] ${res.status} for "${topic}":`, body);
+      if (retries > 0 && res.status >= 500) {
+        await new Promise((ok) => setTimeout(ok, 1000));
+        return curateSubtopics(topic, exclude, retries - 1);
+      }
+      return { titles: [], edges: [] };
+    }
     const data = await res.json();
     return {
       titles: Array.isArray(data.subtopics) ? data.subtopics : [],
@@ -170,7 +179,12 @@ async function curateSubtopics(
       relevance: Array.isArray(data.relevance) ? data.relevance : undefined,
       size: Array.isArray(data.size) ? data.size : undefined,
     };
-  } catch {
+  } catch (err) {
+    console.error(`[subtopics] network error for "${topic}":`, err);
+    if (retries > 0) {
+      await new Promise((ok) => setTimeout(ok, 1000));
+      return curateSubtopics(topic, exclude, retries - 1);
+    }
     return { titles: [], edges: [] };
   }
 }
@@ -696,12 +710,13 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       // Load summary in parallel (doesn't block children)
       if (!node.summary) {
         set({ summaryStatus: 'loading' });
-        fetch('/api/summarize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: node.wiki_title, nodeId: realId }),
-        })
-          .then(async (r) => {
+        const attemptSummary = async (retries = 2): Promise<void> => {
+          try {
+            const r = await fetch('/api/summarize', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: node.wiki_title, nodeId: realId }),
+            });
             if (r.ok) {
               const d = await r.json();
               node.summary = d.summary;
@@ -716,12 +731,24 @@ export const useGraphStore = create<GraphState>((set, get) => ({
                 set({ currentParent: { ...node }, summaryStatus: 'loaded' });
               }
             } else {
+              const body = await r.json().catch(() => ({}));
+              console.error(`[summarize] ${r.status} for "${node.wiki_title}":`, body);
+              if (retries > 0 && r.status >= 500) {
+                await new Promise((ok) => setTimeout(ok, 1000));
+                return attemptSummary(retries - 1);
+              }
               set({ summaryStatus: 'error' });
             }
-          })
-          .catch(() => {
+          } catch (err) {
+            console.error(`[summarize] network error for "${node.wiki_title}":`, err);
+            if (retries > 0) {
+              await new Promise((ok) => setTimeout(ok, 1000));
+              return attemptSummary(retries - 1);
+            }
             set({ summaryStatus: 'error' });
-          });
+          }
+        };
+        attemptSummary();
       } else {
         set({ summaryStatus: 'loaded' });
       }
