@@ -4,21 +4,23 @@ import { getWikiLinks } from '@/lib/wikipedia';
 /**
  * POST /api/wiki/edges
  * Body: { titles: string[] }
- * Returns: { edges: [number, number][] }
+ * Returns: { edges: [number, number, number][], linkCounts: number[] }
  *
- * For each pair (i, j) of titles, returns an edge if either article
- * links to the other on Wikipedia. This produces a real web of relationships
- * between sibling nodes.
+ * For each pair (i, j), computes Jaccard similarity over their Wikipedia
+ * outgoing link sets: |A∩B| / |A∪B|. This produces weighted edges that
+ * reflect semantic relatedness between sibling/root nodes.
+ *
+ * linkCounts[i] = number of outgoing links for article i (proxy for topic breadth).
  */
 export async function POST(req: Request) {
   try {
     const { titles } = await req.json();
     if (!Array.isArray(titles) || titles.length < 2) {
-      return NextResponse.json({ edges: [] });
+      return NextResponse.json({ edges: [], linkCounts: [] });
     }
 
-    // Cap fetches — 12 parallel is enough for our 15-node default.
-    const list: string[] = titles.slice(0, 12);
+    // Cap fetches — 20 parallel covers root-level graphs.
+    const list: string[] = titles.slice(0, 20);
 
     const linksets = await Promise.all(
       list.map((t) =>
@@ -28,19 +30,32 @@ export async function POST(req: Request) {
       )
     );
 
-    const edges: [number, number][] = [];
+    const linkCounts = linksets.map((s) => s.size);
+
+    const edges: [number, number, number][] = [];
     for (let i = 0; i < list.length; i++) {
-      const lowerI = list[i].toLowerCase();
       for (let j = i + 1; j < list.length; j++) {
-        const lowerJ = list[j].toLowerCase();
-        if (linksets[i].has(lowerJ) || linksets[j].has(lowerI)) {
-          edges.push([i, j]);
+        const setI = linksets[i];
+        const setJ = linksets[j];
+
+        // Jaccard similarity: |intersection| / |union|
+        let intersection = 0;
+        const smaller = setI.size <= setJ.size ? setI : setJ;
+        const larger = setI.size <= setJ.size ? setJ : setI;
+        for (const link of smaller) {
+          if (larger.has(link)) intersection++;
+        }
+        const union = setI.size + setJ.size - intersection;
+        const jaccard = union > 0 ? intersection / union : 0;
+
+        if (jaccard > 0.01) {
+          edges.push([i, j, Math.round(jaccard * 1000) / 1000]);
         }
       }
     }
 
     return NextResponse.json(
-      { edges },
+      { edges, linkCounts },
       { headers: { 'Cache-Control': 'public, s-maxage=3600' } }
     );
   } catch (e: any) {

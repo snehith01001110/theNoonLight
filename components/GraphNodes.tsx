@@ -1,32 +1,105 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useGraphStore } from '@/lib/store';
-import type { GraphNode } from '@/lib/types';
+import type { GraphNode, EdgePair } from '@/lib/types';
 
-// Meaningful color scheme:
-// - Root topics (added by the user): sky blue — the "home base" hue
-// - Unvisited child: neutral slate — unexplored, no emphasis
-// - Visited child (already dived into): violet — you've been here
-// - Current parent (the node we're "inside"): emerald — active focus
-// - Outer context (previous level ghosts): warm amber — "above/behind you"
+// Fixed semantic colors — override position-based coloring for special states.
 const COLORS = {
-  root: { sphere: '#38bdf8', label: '#bae6fd' },
-  unvisited: { sphere: '#64748b', label: '#94a3b8' },
-  visited: { sphere: '#a78bfa', label: '#ddd6fe' },
-  active: { sphere: '#34d399', label: '#6ee7b7' },
-  // Amber/gold for ancestor nodes — visually warm = "past / above"
-  outer: { sphere: '#f59e0b', label: '#fde68a' },
+  active: { sphere: '#34d399', label: '#6ee7b7' }, // emerald — "you are here"
+  outer:  { sphere: '#f59e0b', label: '#fde68a' }, // amber   — "above/behind you"
 };
 
-function pickColor(node: GraphNode, isActive: boolean) {
+/**
+ * Assigns a hue to each node so that strongly-connected nodes land close
+ * together in hue space, forming a natural color gradient that reflects
+ * graph relationships — not arbitrary position angles.
+ *
+ * Runs a 1-D force simulation on the edge graph:
+ *   - Edge springs pull connected nodes toward each other (weight = strength)
+ *   - Coulomb repulsion pushes all nodes apart
+ * The resulting 1-D ordering is mapped to a 260° hue arc (yellow-green →
+ * teal → blue → violet), giving 2-4 distinct color families for a typical
+ * 10-15 node graph while keeping related nodes in similar hues.
+ *
+ * Works identically for root nodes and child nodes — both have edge weights.
+ */
+export function computeNodeHues(nodes: GraphNode[], edges: EdgePair[]): number[] {
+  const n = nodes.length;
+  if (n === 0) return [];
+  if (n === 1) return [210]; // single node → blue
+
+  const idToIdx = new Map(nodes.map((node, i) => [node.id, i]));
+
+  const forceEdges = (edges as [string, string, number?][])
+    .map(([a, b, w]) => ({
+      source: idToIdx.get(a) ?? -1,
+      target: idToIdx.get(b) ?? -1,
+      weight: typeof w === 'number' ? w : 0.5,
+    }))
+    .filter(e => e.source >= 0 && e.target >= 0);
+
+  // Spread nodes evenly as starting positions
+  const pos = Array.from({ length: n }, (_, i) => (i / (n - 1)) * 2 - 1);
+  const vel = new Array(n).fill(0);
+
+  for (let iter = 0; iter < 150; iter++) {
+    const alpha = 1 - iter / 150;
+
+    // Springs: connected nodes attract, rest length shrinks with weight
+    for (const e of forceEdges) {
+      const delta = pos[e.target] - pos[e.source];
+      const restLen = (1.2 - e.weight) * 0.25;
+      const stretch = Math.abs(delta) - restLen;
+      if (stretch > 0) {
+        const f = stretch * 0.05 * alpha * e.weight;
+        const dir = delta >= 0 ? 1 : -1;
+        vel[e.source] += dir * f;
+        vel[e.target] -= dir * f;
+      }
+    }
+
+    // Repulsion: keep nodes spread so colors stay distinguishable
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const d = Math.abs(pos[j] - pos[i]) + 0.02;
+        const f = 0.022 * alpha / (d * d);
+        const dir = pos[j] >= pos[i] ? 1 : -1;
+        vel[i] -= dir * f;
+        vel[j] += dir * f;
+      }
+    }
+
+    for (let i = 0; i < n; i++) {
+      vel[i] *= 0.88; // damping
+      pos[i] += vel[i];
+    }
+  }
+
+  // Normalize to [0, 1] then map to hue arc 60°→320° (yellow-green → violet).
+  // 260° arc gives 2-4 perceptually distinct color bands without full-rainbow chaos.
+  const min = Math.min(...pos);
+  const max = Math.max(...pos);
+  const range = max - min || 1;
+  return pos.map(p => 60 + ((p - min) / range) * 260);
+}
+
+/** Convert a hue (0–360) to sphere + label colors. */
+function hueToColor(hue: number, visited = false): { sphere: string; label: string } {
+  const sat = visited ? 48 : 74;
+  const lit = visited ? 55 : 63;
+  return {
+    sphere: `hsl(${hue.toFixed(1)}, ${sat}%, ${lit}%)`,
+    label:  `hsl(${hue.toFixed(1)}, ${Math.max(sat - 16, 34)}%, ${Math.min(lit + 22, 88)}%)`,
+  };
+}
+
+function pickColor(node: GraphNode, isActive: boolean, hue?: number) {
   if (isActive) return COLORS.active;
-  if (node.is_root) return COLORS.root;
-  if (node.visited) return COLORS.visited;
-  return COLORS.unvisited;
+  return hueToColor(hue ?? 210, node.visited);
 }
 
 function NodeMesh({
@@ -37,6 +110,7 @@ function NodeMesh({
   isActive = false,
   opacity = 1,
   overrideColor,
+  hue,
 }: {
   node: GraphNode;
   index: number;
@@ -45,12 +119,13 @@ function NodeMesh({
   isActive?: boolean;
   opacity?: number;
   overrideColor?: { sphere: string; label: string };
+  hue?: number;
 }) {
   const group = useRef<THREE.Group>(null);
   const coreMat = useRef<THREE.MeshStandardMaterial>(null);
   const baseY = node.position_y;
   const diveInto = useGraphStore((s) => s.diveInto);
-  const color = overrideColor ?? pickColor(node, isActive);
+  const color = overrideColor ?? pickColor(node, isActive, hue);
 
   const pointerDown = useRef({ x: 0, y: 0, time: 0 });
 
@@ -189,12 +264,23 @@ const OUTER_SCALE = 2.8;
 
 export default function GraphNodes() {
   const currentNodes = useGraphStore((s) => s.currentNodes);
+  const currentEdges = useGraphStore((s) => s.currentEdges);
   const outerContextNodes = useGraphStore((s) => s.outerContextNodes);
   const diveAnimation = useGraphStore((s) => s.diveAnimation);
 
   const previewing = diveAnimation.phase === 'previewing';
   const previewAnchor = diveAnimation.targetPos;
   const previewNodes = diveAnimation.previewNodes;
+
+  // 1-D graph coloring: hue reflects edge-weight similarity, not raw position.
+  const nodeHues = useMemo(
+    () => computeNodeHues(currentNodes, currentEdges),
+    [currentNodes, currentEdges],
+  );
+  const previewHues = useMemo(
+    () => computeNodeHues(diveAnimation.previewNodes, diveAnimation.previewEdges),
+    [diveAnimation.previewNodes, diveAnimation.previewEdges],
+  );
 
   return (
     <>
@@ -231,6 +317,7 @@ export default function GraphNodes() {
             key={node.id}
             node={node}
             index={i}
+            hue={nodeHues[i]}
             isActive={!!isDiving}
             opacity={previewing && !isDiving ? 0.35 : 1}
             interactive={!previewing}
@@ -249,6 +336,7 @@ export default function GraphNodes() {
               key={`preview-${n.id}`}
               node={n}
               index={i}
+              hue={previewHues[i]}
               scale={1}
               interactive={false}
               opacity={0.95}

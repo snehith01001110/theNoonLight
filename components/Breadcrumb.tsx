@@ -34,7 +34,7 @@ export default function Breadcrumb() {
         onClick={() => goToLevel(-1)}
         className="text-slate-400 hover:text-sky-300 transition-colors shrink-0"
       >
-        Home
+        thenoonlight
       </button>
       {labels.map((label, i) => (
         <span key={i} className="flex items-center gap-1.5 md:gap-2 shrink-0">

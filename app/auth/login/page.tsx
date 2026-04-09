@@ -48,7 +48,7 @@ function LoginForm() {
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-8">
           <div className="text-xs uppercase tracking-[0.35em] text-slate-500 mb-3">
-            Graphmind
+            thenoonlight
           </div>
           <h1 className="text-3xl font-light">Sign in</h1>
         </div>

@@ -1,8 +1,9 @@
 'use client';
 
 /**
- * Minimal markdown renderer — handles ## headers and - bullets.
- * Good enough for the structured summaries we generate.
+ * Styled markdown renderer for structured topic summaries.
+ * Handles ## section headers, - bullets, and plain paragraphs
+ * with polished card-like visual treatment.
  */
 export default function RichSummary({ markdown }: { markdown: string }) {
   if (!markdown) {
@@ -16,10 +17,11 @@ export default function RichSummary({ markdown }: { markdown: string }) {
   const flushBullets = (key: number) => {
     if (bulletBuffer.length === 0) return;
     elements.push(
-      <ul key={`ul-${key}`} className="list-disc pl-5 space-y-1 my-2 text-slate-200 max-md:list-none max-md:pl-3 max-md:border-l-2 max-md:border-emerald-500/30 max-md:space-y-1.5">
+      <ul key={`ul-${key}`} className="space-y-2 my-2.5 pl-1">
         {bulletBuffer.map((b, i) => (
-          <li key={i} className="text-sm max-md:text-xs leading-relaxed">
-            {b}
+          <li key={i} className="flex items-start gap-2.5 text-sm max-md:text-xs leading-relaxed text-slate-300">
+            <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-sky-400/60 shrink-0" />
+            <span>{b}</span>
           </li>
         ))}
       </ul>
@@ -36,12 +38,15 @@ export default function RichSummary({ markdown }: { markdown: string }) {
     if (line.startsWith('## ')) {
       flushBullets(i);
       elements.push(
-        <h3
+        <div
           key={`h-${i}`}
-          className="text-sky-300 text-xs uppercase tracking-widest font-medium mt-4 mb-1 max-md:bg-sky-500/10 max-md:inline-block max-md:px-2 max-md:py-0.5 max-md:rounded"
+          className="flex items-center gap-2.5 mt-5 mb-2 first:mt-0"
         >
-          {line.replace(/^##\s*/, '')}
-        </h3>
+          <div className="w-0.5 h-4 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-400/20" />
+          <h3 className="text-[11px] uppercase tracking-[0.15em] font-semibold text-slate-400">
+            {line.replace(/^##\s*/, '')}
+          </h3>
+        </div>
       );
     } else if (line.startsWith('# ')) {
       flushBullets(i);
@@ -55,7 +60,7 @@ export default function RichSummary({ markdown }: { markdown: string }) {
     } else {
       flushBullets(i);
       elements.push(
-        <p key={`p-${i}`} className="text-slate-200 text-sm max-md:text-xs leading-relaxed my-1">
+        <p key={`p-${i}`} className="text-slate-300 text-sm max-md:text-xs leading-[1.7] my-1.5">
           {line}
         </p>
       );

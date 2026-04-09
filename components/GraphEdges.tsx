@@ -5,6 +5,24 @@ import * as THREE from 'three';
 import { useGraphStore } from '@/lib/store';
 import type { GraphNode, EdgePair } from '@/lib/types';
 
+// Root-level edge style — heavier tubes, neutral silver so the edges stay
+// legible without competing with the varied root node colors.
+const ROOT_EDGE = {
+  color: '#cbd5e1',       // slate-300 — neutral, works with any node color
+  baseOpacity: 0.28,
+  opacityRange: 0.52,     // strong edges reach opacity 0.80
+  baseRadius: 0.018,
+  radiusRange: 0.055,     // strong edges get radius 0.073
+};
+
+const CHILD_EDGE = {
+  color: '#818cf8',       // indigo-400
+  baseOpacity: 0.15,
+  opacityRange: 0.40,
+  baseRadius: 0.008,
+  radiusRange: 0.032,
+};
+
 interface LineData {
   key: string;
   geometry: THREE.BufferGeometry;
@@ -34,12 +52,19 @@ function buildLines(nodes: GraphNode[], edges: EdgePair[]): LineData[] {
 }
 
 // Render a single tube for a weighted edge
-function EdgeTube({ line, opacity, color }: { line: LineData; opacity: number; color: string }) {
-  // Weight drives visual prominence:
-  // - opacity: 0.15 (weak) to 0.55 (strong)
-  // - thickness via tube radius: 0.01 (weak) to 0.04 (strong)
+function EdgeTube({
+  line,
+  opacity,
+  color,
+  style = CHILD_EDGE,
+}: {
+  line: LineData;
+  opacity: number;
+  color: string;
+  style?: typeof CHILD_EDGE;
+}) {
   const w = line.weight;
-  const edgeOpacity = opacity * (0.15 + w * 0.4);
+  const edgeOpacity = opacity * (style.baseOpacity + w * style.opacityRange);
 
   const tubeGeometry = useMemo(() => {
     // Reconstruct curve from the buffer geometry points
@@ -49,9 +74,9 @@ function EdgeTube({ line, opacity, color }: { line: LineData; opacity: number; c
       points.push(new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)));
     }
     const curve = new THREE.CatmullRomCurve3(points);
-    const radius = 0.008 + w * 0.032;
+    const radius = style.baseRadius + w * style.radiusRange;
     return new THREE.TubeGeometry(curve, 16, radius, 6, false);
-  }, [line.geometry, w]);
+  }, [line.geometry, w, style]);
 
   return (
     <mesh geometry={tubeGeometry}>
@@ -73,6 +98,11 @@ export default function GraphEdges() {
   const currentEdges = useGraphStore((s) => s.currentEdges);
   const outerContextNodes = useGraphStore((s) => s.outerContextNodes);
   const diveAnimation = useGraphStore((s) => s.diveAnimation);
+  const path = useGraphStore((s) => s.path);
+
+  // Root level = no parent, so apply heavier edge styling
+  const isRootLevel = path.length === 0;
+  const currentEdgeStyle = isRootLevel ? ROOT_EDGE : CHILD_EDGE;
 
   const currentLines = useMemo(
     () => buildLines(currentNodes, currentEdges),
@@ -142,7 +172,8 @@ export default function GraphEdges() {
           key={line.key}
           line={line}
           opacity={currentOpacity}
-          color="#818cf8"
+          color={currentEdgeStyle.color}
+          style={currentEdgeStyle}
         />
       ))}
 

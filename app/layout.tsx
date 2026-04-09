@@ -4,7 +4,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Graphmind — 3D Knowledge Explorer',
+  title: 'thenoonlight',
   description:
     'Explore any topic as a 3D fractal knowledge graph. Powered by Wikipedia and Claude.',
 };

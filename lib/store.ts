@@ -3,7 +3,6 @@
 import { create } from 'zustand';
 import type { GraphNode, Position3D, EdgePair } from './types';
 import { createClient } from './supabase-browser';
-import { distributeOnSphere } from './wikipedia';
 import { forceLayout, ForceEdge } from './force-layout';
 
 export type DivePhase = 'idle' | 'previewing' | 'emerging';
@@ -291,23 +290,115 @@ function buildVirtualChildren(
   return { nodes, edges: edgePairs };
 }
 
-/** Compute edges between an array of nodes via wiki link intersection. */
-async function computeNodeEdges(nodes: GraphNode[]): Promise<EdgePair[]> {
-  if (nodes.length < 2) return [];
+/** Compute edges between an array of nodes via wiki link Jaccard similarity. */
+async function computeNodeEdges(
+  nodes: GraphNode[]
+): Promise<{ edges: EdgePair[]; linkCounts: number[] }> {
+  if (nodes.length < 2) return { edges: [], linkCounts: [] };
   try {
     const res = await fetch('/api/wiki/edges', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ titles: nodes.map((n) => n.wiki_title) }),
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { edges: [], linkCounts: [] };
     const data = await res.json();
-    return ((data.edges ?? []) as [number, number][])
+    const linkCounts: number[] = data.linkCounts ?? [];
+    const edges = ((data.edges ?? []) as [number, number, number?][])
       .filter(([i, j]) => nodes[i] && nodes[j])
-      .map(([i, j]) => [nodes[i].id, nodes[j].id] as EdgePair);
+      .map(([i, j, w]) => [nodes[i].id, nodes[j].id, w ?? 0.5] as EdgePair);
+    return { edges, linkCounts };
   } catch {
-    return [];
+    return { edges: [], linkCounts: [] };
   }
+}
+
+/**
+ * Compute a semantically-aware force-directed layout for root nodes.
+ *
+ * Uses Jaccard similarity over Wikipedia link sets as edge weights, link
+ * counts as a proxy for topic breadth (size), and edge connectivity as
+ * relevance (highly connected roots sit closer to center).
+ */
+async function layoutRootNodes(
+  roots: GraphNode[]
+): Promise<{ nodes: GraphNode[]; edges: EdgePair[] }> {
+  if (roots.length === 0) return { nodes: [], edges: [] };
+  if (roots.length === 1) {
+    return {
+      nodes: [{ ...roots[0], position_x: 0, position_y: 0, position_z: 0 }],
+      edges: [],
+    };
+  }
+
+  const { edges, linkCounts } = await computeNodeEdges(roots);
+
+  // Build ForceEdge[] from weighted EdgePairs
+  const idToIdx = new Map(roots.map((r, i) => [r.id, i]));
+  const forceEdges: ForceEdge[] = [];
+  for (const ep of edges) {
+    const si = idToIdx.get(ep[0]);
+    const ti = idToIdx.get(ep[1]);
+    if (si !== undefined && ti !== undefined) {
+      forceEdges.push({ source: si, target: ti, weight: (ep as [string, string, number])[2] ?? 0.5 });
+    }
+  }
+
+  // Derive size per root from link counts (normalized 0–1)
+  const maxLinks = Math.max(1, ...linkCounts);
+  const sizes = roots.map((_, i) => {
+    const count = linkCounts[i] ?? 0;
+    return Math.max(0.1, count / maxLinks);
+  });
+
+  // Derive relevance per root from edge connectivity
+  // (average weight of edges connected to this node × connectivity ratio)
+  const weightSums = new Array(roots.length).fill(0);
+  const edgeCounts = new Array(roots.length).fill(0);
+  for (const fe of forceEdges) {
+    const w = fe.weight ?? 0.5;
+    weightSums[fe.source] += w;
+    weightSums[fe.target] += w;
+    edgeCounts[fe.source]++;
+    edgeCounts[fe.target]++;
+  }
+  const maxPossibleEdges = roots.length - 1;
+  const relevance = roots.map((_, i) => {
+    if (edgeCounts[i] === 0) return 0.2; // isolated nodes stay on the periphery
+    const avgWeight = weightSums[i] / edgeCounts[i];
+    const connectivity = edgeCounts[i] / maxPossibleEdges;
+    return Math.max(0.1, Math.min(1, avgWeight * 0.6 + connectivity * 0.4));
+  });
+
+  const positions = forceLayout(roots.length, forceEdges, relevance, sizes, {
+    baseRadius: 6,
+    boundaryRadius: 12,
+    springLength: 3.0,
+  });
+
+  const laidOut = roots.map((root, i) => ({
+    ...root,
+    position_x: positions[i]?.x ?? root.position_x,
+    position_y: positions[i]?.y ?? root.position_y,
+    position_z: positions[i]?.z ?? root.position_z,
+    topicSize: sizes[i],
+  }));
+
+  // Normalize edge weights from raw Jaccard values (typically 0.01–0.20) to
+  // a [0.25, 1.0] visual range so edges are rendered with meaningful thickness.
+  // This preserves relative ordering while making all edges visually legible.
+  const rawWeights = edges.map((ep) => (ep as [string, string, number])[2] ?? 0);
+  const maxW = Math.max(0.001, ...rawWeights);
+  const minW = Math.min(...rawWeights);
+  const normalizedEdges: EdgePair[] = edges.map((ep) => {
+    const raw = (ep as [string, string, number])[2] ?? 0;
+    const normalized = minW === maxW
+      ? 0.65
+      : 0.25 + ((raw - minW) / (maxW - minW)) * 0.75;
+    return [ep[0], ep[1], Math.round(normalized * 100) / 100] as EdgePair;
+  });
+
+  return { nodes: laidOut, edges: normalizedEdges };
 }
 
 /** Which children of parentId have been dived into (have their own row)? */
@@ -352,7 +443,7 @@ async function legacyChildrenFromRows(
   );
   if (rows.length === 0) return null;
 
-  // Compute edges via wiki link intersection
+  // Compute edges via wiki link Jaccard similarity
   let edges: EdgePair[] = [];
   if (rows.length >= 2) {
     try {
@@ -363,9 +454,9 @@ async function legacyChildrenFromRows(
       });
       if (res.ok) {
         const d = await res.json();
-        edges = ((d.edges ?? []) as [number, number][])
+        edges = ((d.edges ?? []) as [number, number, number?][])
           .filter(([i, j]) => rows[i] && rows[j])
-          .map(([i, j]) => [rows[i].id, rows[j].id] as EdgePair);
+          .map(([i, j, w]) => [rows[i].id, rows[j].id, w ?? 0.5] as EdgePair);
       }
     } catch {}
   }
@@ -416,11 +507,25 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     try {
       const supabase = createClient();
       const roots = await fetchRootNodes(supabase, userId);
-      const rootEdges = await computeNodeEdges(roots);
+      const { nodes: laidOut, edges } = await layoutRootNodes(roots);
+
+      // Persist force-layout positions so DB stays fresh (fire-and-forget)
+      for (const u of laidOut) {
+        supabase
+          .from('graph_nodes')
+          .update({
+            position_x: u.position_x,
+            position_y: u.position_y,
+            position_z: u.position_z,
+          })
+          .eq('id', u.id)
+          .then(() => {});
+      }
+
       set({
-        rootNodes: roots,
-        currentNodes: roots,
-        currentEdges: rootEdges,
+        rootNodes: laidOut,
+        currentNodes: laidOut,
+        currentEdges: edges,
         currentParent: null,
         outerContextNodes: [],
         path: [],
@@ -580,20 +685,14 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
       if (newlyCreated.length === 0) return;
 
-      // Step 3: Redistribute ALL root positions on the sphere so everything
-      // stays evenly spread.
+      // Step 3: Compute semantic layout for ALL roots using force-directed
+      // placement based on Wikipedia link Jaccard similarity.
       set({ loadingMessage: 'Placing nodes...' });
       const allRoots = [...existingRoots, ...newlyCreated];
-      const freshPositions = distributeOnSphere(allRoots.length, 5);
-      const updates = allRoots.map((root, i) => ({
-        ...root,
-        position_x: freshPositions[i].x,
-        position_y: freshPositions[i].y,
-        position_z: freshPositions[i].z,
-      }));
+      const { nodes: laidOut, edges } = await layoutRootNodes(allRoots);
 
       // Persist updated positions (fire-and-forget)
-      for (const u of updates) {
+      for (const u of laidOut) {
         supabase
           .from('graph_nodes')
           .update({
@@ -605,13 +704,8 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           .then(() => {});
       }
 
-      // Step 4: Show the new roots immediately, then compute edges async.
-      set({ rootNodes: updates, currentNodes: updates, currentEdges: [] });
-      computeNodeEdges(updates).then((edges) => {
-        if (get().path.length === 0) {
-          set({ currentEdges: edges });
-        }
-      });
+      // Step 4: Show the new roots with semantic positions + weighted edges.
+      set({ rootNodes: laidOut, currentNodes: laidOut, currentEdges: edges });
     } finally {
       set({ loading: false, loadingMessage: '' });
     }
@@ -862,9 +956,11 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           startedAt: performance.now(),
         },
       });
-      // Recompute root edges asynchronously
-      computeNodeEdges(rootNodes).then((edges) => {
-        if (get().path.length === 0) set({ currentEdges: edges });
+      // Recompute root layout asynchronously (semantic positions + weighted edges)
+      layoutRootNodes(rootNodes).then(({ nodes: laidOut, edges }) => {
+        if (get().path.length === 0) {
+          set({ rootNodes: laidOut, currentNodes: laidOut, currentEdges: edges });
+        }
       });
       setTimeout(
         () => set({ diveAnimation: emptyAnimation }),
@@ -896,8 +992,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           startedAt: performance.now(),
         },
       });
-      computeNodeEdges(rootNodes).then((edges) => {
-        if (get().path.length === 0) set({ currentEdges: edges });
+      layoutRootNodes(rootNodes).then(({ nodes: laidOut, edges }) => {
+        if (get().path.length === 0) {
+          set({ rootNodes: laidOut, currentNodes: laidOut, currentEdges: edges });
+        }
       });
       setTimeout(
         () => set({ diveAnimation: emptyAnimation }),
