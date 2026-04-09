@@ -19,6 +19,8 @@ export default function LandingPage() {
       data: { user },
     } = await supabase.auth.getUser();
     const q = encodeURIComponent(query.trim());
+    // Persist query so it survives the login redirect chain
+    sessionStorage.setItem('pendingQuery', query.trim());
     if (user) {
       router.push(`/explore?q=${q}`);
     } else {

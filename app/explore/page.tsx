@@ -32,15 +32,20 @@ function ExploreContent() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
+        // Preserve pending query through the auth redirect
+        const pendingQ = searchParams.get('q');
+        if (pendingQ) sessionStorage.setItem('pendingQuery', pendingQ);
         router.replace('/auth/login');
         return;
       }
       setUserId(user.id);
       await loadInitial();
 
-      const q = searchParams.get('q');
+      // Check URL param first, then fall back to sessionStorage
+      const q = searchParams.get('q') || sessionStorage.getItem('pendingQuery');
       if (q && !initialQueryProcessed.current) {
         initialQueryProcessed.current = true;
+        sessionStorage.removeItem('pendingQuery');
         await startTopic(q);
         // Clean the URL
         router.replace('/explore');
