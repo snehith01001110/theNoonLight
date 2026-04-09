@@ -373,6 +373,18 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       if (!title) throw new Error('No Wikipedia article found');
 
       const existingRoots = get().rootNodes;
+
+      // Don't add a duplicate — if this topic already exists as a root, just
+      // dive into the existing one instead.
+      const duplicate = existingRoots.find(
+        (r) => r.wiki_title.toLowerCase() === title.toLowerCase()
+      );
+      if (duplicate) {
+        set({ loading: false, loadingMessage: '' });
+        get().diveInto(duplicate.id);
+        return;
+      }
+
       const totalCount = existingRoots.length + 1;
       const positions = distributeOnSphere(totalCount, 5);
 
