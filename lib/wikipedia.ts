@@ -75,6 +75,46 @@ export async function getIntroLinks(title: string): Promise<string[]> {
     .filter((t) => !isJunkLink(t));
 }
 
+/**
+ * Lightweight title resolution: checks if a Wikipedia title is a disambiguation
+ * page and resolves it to the most relevant actual article. Returns the original
+ * title if it's already a real article.
+ */
+export async function resolveWikiTitle(title: string): Promise<string> {
+  const url = `${WIKI_REST}/page/summary/${encodeURIComponent(title)}`;
+  const res = await fetch(url, { next: { revalidate: 3600 } });
+  if (!res.ok) return title;
+  const data = await res.json();
+
+  if (data.type !== 'disambiguation') {
+    return data.title || title;
+  }
+
+  // Disambiguation page — use Wikipedia search to find the best match
+  const searchResult = await searchWikipedia(title);
+  if (searchResult && searchResult.toLowerCase() !== title.toLowerCase()) {
+    return searchResult;
+  }
+
+  // Fallback: scan intro links for closest match
+  const links = await getIntroLinks(title);
+  const allLinks = links.length > 0 ? links : await getWikiLinks(title);
+  const lowerTitle = title.toLowerCase();
+
+  const scored = allLinks
+    .filter((l) => !l.toLowerCase().includes('('))
+    .map((l) => {
+      const lower = l.toLowerCase();
+      let score = 0;
+      if (lower.startsWith(lowerTitle)) score += 10;
+      if (lower.includes(lowerTitle)) score += 5;
+      return { link: l, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  return scored[0]?.link ?? allLinks[0] ?? title;
+}
+
 export async function getWikiSummary(title: string): Promise<{
   title: string;
   extract: string;
@@ -84,13 +124,44 @@ export async function getWikiSummary(title: string): Promise<{
   const res = await fetch(url, { next: { revalidate: 3600 } });
   if (!res.ok) return null;
   const data = await res.json();
+
   if (data.type === 'disambiguation') {
-    const links = await getWikiLinks(title);
-    if (links.length > 0) {
-      return getWikiSummary(links[0]);
+    // Strategy 1: Use Wikipedia search to find the most relevant actual article.
+    // Wikipedia's search engine ranks by relevance, so "Crypto" → "Cryptography"
+    // rather than a fictional character or niche article.
+    const searchResult = await searchWikipedia(title);
+    if (searchResult && searchResult.toLowerCase() !== title.toLowerCase()) {
+      const resolved = await getWikiSummary(searchResult);
+      if (resolved) return resolved;
+    }
+
+    // Strategy 2: If search didn't help, scan disambiguation links for the
+    // most likely "main" article — prefer titles that start with or closely
+    // match the original query (e.g. "Cryptography" for "Crypto").
+    const links = await getIntroLinks(title);
+    const allLinks = links.length > 0 ? links : await getWikiLinks(title);
+    const lowerTitle = title.toLowerCase();
+
+    // Rank links: exact prefix match > contains query > first link
+    const scored = allLinks
+      .filter((l) => !l.toLowerCase().includes('('))  // skip "(disambiguation)", "(film)" etc.
+      .map((l) => {
+        const lower = l.toLowerCase();
+        let score = 0;
+        if (lower.startsWith(lowerTitle)) score += 10;  // "Crypto" → "Cryptography"
+        if (lower.includes(lowerTitle)) score += 5;
+        if (lower === lowerTitle) score += 20;           // exact match (shouldn't happen for disambig)
+        return { link: l, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    const best = scored[0]?.link ?? allLinks[0];
+    if (best) {
+      return getWikiSummary(best);
     }
     return null;
   }
+
   return {
     title: data.title,
     extract: data.extract || '',

@@ -9,6 +9,7 @@ import Sidebar from '@/components/Sidebar';
 import Breadcrumb from '@/components/Breadcrumb';
 import PromptInput from '@/components/PromptInput';
 import TopBar from '@/components/TopBar';
+import SidebarReopenButton from '@/components/SidebarReopenButton';
 
 // Disable SSR for the 3D canvas
 const Scene = dynamic(() => import('@/components/Scene'), { ssr: false });
@@ -60,6 +61,7 @@ function ExploreContent() {
           <PromptInput />
           <TopBar />
           <Sidebar />
+          <SidebarReopenButton />
         </>
       )}
 

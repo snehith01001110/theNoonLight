@@ -701,6 +701,11 @@ export const useGraphStore = create<GraphState>((set, get) => ({
             if (r.ok) {
               const d = await r.json();
               node.summary = d.summary;
+              // If the wiki title was resolved from a disambiguation page,
+              // update the node so the Wikipedia link points correctly.
+              if (d.resolvedTitle) {
+                node.wiki_title = d.resolvedTitle;
+              }
               // Force sidebar re-render by touching currentParent
               const s = get();
               if (s.currentParent?.id === realId) {

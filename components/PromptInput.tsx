@@ -38,7 +38,7 @@ export default function PromptInput() {
         disabled={loading || !value.trim()}
         className="px-4 py-2.5 md:py-2 bg-sky-500/20 border border-sky-500/40 text-sky-300 text-sm rounded hover:bg-sky-500/30 disabled:opacity-40 shrink-0"
       >
-        Add
+        {loading ? '...' : '+'}
       </button>
     </form>
   );

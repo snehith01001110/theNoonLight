@@ -43,7 +43,7 @@ export default function Breadcrumb() {
             onClick={() => goToLevel(i)}
             className={`transition-colors truncate max-w-[120px] md:max-w-none ${
               i === labels.length - 1
-                ? 'text-emerald-400'
+                ? 'text-sky-300'
                 : 'text-slate-400 hover:text-sky-300'
             }`}
           >

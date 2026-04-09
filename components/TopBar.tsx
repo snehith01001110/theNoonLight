@@ -47,7 +47,7 @@ export default function TopBar() {
         onClick={handleSignOut}
         className="px-3 py-2.5 md:py-2 bg-slate-900/80 backdrop-blur border border-slate-800 rounded text-slate-400 hover:text-slate-200"
       >
-        Sign out
+        Sign Out
       </button>
     </div>
   );

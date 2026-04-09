@@ -104,10 +104,6 @@ export default function LandingPage() {
           </button>
         </div>
       </form>
-
-      <div className="absolute bottom-6 text-[10px] text-slate-600/60 uppercase tracking-[0.3em]">
-        Graphmind
-      </div>
     </main>
   );
 }
