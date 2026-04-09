@@ -29,7 +29,7 @@ export default function PromptInput() {
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Add a topic…"
+        placeholder="Add a topic or idea…"
         disabled={loading}
         className="bg-slate-900/80 backdrop-blur border border-slate-800 text-slate-200 text-sm px-3 py-2.5 md:py-2 rounded focus:outline-none focus:border-sky-500 flex-1 md:flex-none md:w-56"
       />

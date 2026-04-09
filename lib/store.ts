@@ -418,121 +418,163 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   startTopic: async (query: string) => {
     const { userId } = get();
     if (!userId || !query.trim()) return;
-    set({ loading: true, loadingMessage: `Exploring ${query}...` });
+    set({ loading: true, loadingMessage: `Thinking about "${query}"...` });
     try {
       const supabase = createClient();
-      const searchRes = await fetch(
-        `/api/wiki/search?q=${encodeURIComponent(query)}`
-      );
-      const searchData = await searchRes.json();
-      const title: string = searchData.title;
-      if (!title) throw new Error('No Wikipedia article found');
 
-      const existingRoots = get().rootNodes;
+      // Step 1: Ask Claude Haiku if this is a compound query that should
+      // spawn multiple root nodes (e.g. "marketing for my app" → 3 roots).
+      let concepts: string[] = [query];
+      try {
+        const decompRes = await fetch('/api/decompose', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+        if (decompRes.ok) {
+          const decompData = await decompRes.json();
+          if (Array.isArray(decompData.concepts) && decompData.concepts.length > 0) {
+            concepts = decompData.concepts;
+          }
+        }
+      } catch {
+        // decompose failed — fall back to single concept
+      }
 
-      // Helper: navigate to a node deep in the graph with the correct
-      // ancestor path (so breadcrumb shows Home > Human > Cognition, and
-      // Back goes to the parent level, not Home).
+      const isCompound = concepts.length > 1;
+
+      // Helper: navigate to an existing node deep in the graph.
       const navigateToExisting = async (
         targetNodeId: string,
         ancestorPath: string[]
       ) => {
         set({ loading: false, loadingMessage: '' });
         if (ancestorPath.length > 0) {
-          // First navigate to the parent level so currentNodes/currentParent
-          // are set correctly, then dive into the target.
-          const parentDepth = ancestorPath.length - 1;
-          // Temporarily set path so goToLevel can slice it
           set({ path: ancestorPath });
-          await get().goToLevel(parentDepth);
+          await get().goToLevel(ancestorPath.length - 1);
         }
-        // Now dive into the target — this appends it to the path
         await get().diveInto(targetNodeId);
       };
 
-      // Don't add a duplicate — check if this topic exists ANYWHERE in the
-      // user's graph. If found, navigate with full ancestor path.
-      const duplicateRoot = existingRoots.find(
-        (r) => r.wiki_title.toLowerCase() === title.toLowerCase()
-      );
-      if (duplicateRoot) {
-        set({ loading: false, loadingMessage: '' });
-        get().diveInto(duplicateRoot.id);
-        return;
-      }
+      // Helper: resolve a single concept to a Wikipedia title and create a
+      // root node. Returns the created GraphNode, or null if skipped/duplicate.
+      const resolveAndCreate = async (
+        concept: string,
+        existingRoots: GraphNode[]
+      ): Promise<GraphNode | null> => {
+        set({ loadingMessage: `Looking up "${concept}"...` });
+        const searchRes = await fetch(
+          `/api/wiki/search?q=${encodeURIComponent(concept)}`
+        );
+        const searchData = await searchRes.json();
+        const title: string = searchData.title;
+        if (!title) return null;
 
-      // Check child nodes (rows created when the user dived into them)
-      const { data: existingChild } = await supabase
-        .from('graph_nodes')
-        .select('id, parent_id')
-        .eq('user_id', userId)
-        .ilike('wiki_title', title)
-        .limit(1)
-        .maybeSingle();
+        // Skip duplicates already in root list
+        const duplicateRoot = existingRoots.find(
+          (r) => r.wiki_title.toLowerCase() === title.toLowerCase()
+        );
+        if (duplicateRoot) {
+          // For single-concept queries, navigate into the duplicate
+          if (!isCompound) {
+            set({ loading: false, loadingMessage: '' });
+            get().diveInto(duplicateRoot.id);
+          }
+          return null;
+        }
 
-      if (existingChild) {
-        const ancestors = await buildAncestorPath(supabase, existingChild.id);
-        await navigateToExisting(existingChild.id, ancestors);
-        return;
-      }
+        // Check child nodes (rows the user has already dived into)
+        const { data: existingChild } = await supabase
+          .from('graph_nodes')
+          .select('id, parent_id')
+          .eq('user_id', userId)
+          .ilike('wiki_title', title)
+          .limit(1)
+          .maybeSingle();
 
-      // Check virtual children: topic might be listed in a parent's
-      // subtopics_json even though the user hasn't clicked into it yet.
-      const titleLower = title.toLowerCase();
-      const { data: parentWithChild } = await supabase
-        .from('graph_nodes')
-        .select('id, subtopics_json')
-        .eq('user_id', userId)
-        .not('subtopics_json', 'is', null)
-        .limit(50);
+        if (existingChild) {
+          if (!isCompound) {
+            const ancestors = await buildAncestorPath(supabase, existingChild.id);
+            await navigateToExisting(existingChild.id, ancestors);
+          }
+          return null;
+        }
 
-      if (parentWithChild) {
-        for (const row of parentWithChild) {
-          const sj = row.subtopics_json as { titles?: string[] } | null;
-          if (!sj?.titles) continue;
-          const match = sj.titles.find(
-            (t: string) => t.toLowerCase() === titleLower
-          );
-          if (match) {
-            // Found as a virtual child — navigate with proper path
-            const virtualId = `v|${row.id}|${match}`;
-            // The parent of this virtual node is row.id — build path to it
-            const ancestors = await buildAncestorPath(supabase, row.id);
-            const fullAncestorPath = [...ancestors, row.id];
-            await navigateToExisting(virtualId, fullAncestorPath);
-            return;
+        // Check virtual children in subtopics_json
+        const titleLower = title.toLowerCase();
+        const { data: parentWithChild } = await supabase
+          .from('graph_nodes')
+          .select('id, subtopics_json')
+          .eq('user_id', userId)
+          .not('subtopics_json', 'is', null)
+          .limit(50);
+
+        if (parentWithChild) {
+          for (const row of parentWithChild) {
+            const sj = row.subtopics_json as { titles?: string[] } | null;
+            if (!sj?.titles) continue;
+            const match = sj.titles.find(
+              (t: string) => t.toLowerCase() === titleLower
+            );
+            if (match) {
+              if (!isCompound) {
+                const virtualId = `v|${row.id}|${match}`;
+                const ancestors = await buildAncestorPath(supabase, row.id);
+                await navigateToExisting(virtualId, [...ancestors, row.id]);
+              }
+              return null;
+            }
           }
         }
+
+        // Placeholder position — will be redistributed below
+        const { data: created, error } = await supabase
+          .from('graph_nodes')
+          .insert({
+            user_id: userId,
+            wiki_title: title,
+            label: title,
+            parent_id: null,
+            is_root: true,
+            position_x: 0,
+            position_y: 0,
+            position_z: 0,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        return created as GraphNode;
+      };
+
+      // Step 2: Create root nodes for each concept sequentially so we can
+      // show live progress messages.
+      const existingRoots = get().rootNodes;
+      const newlyCreated: GraphNode[] = [];
+
+      for (const concept of concepts) {
+        const node = await resolveAndCreate(concept, [
+          ...existingRoots,
+          ...newlyCreated,
+        ]);
+        if (node) newlyCreated.push(node);
+        // If single concept and we navigated to an existing node, we're done
+        if (!isCompound && get().path.length > 0) return;
       }
 
-      const totalCount = existingRoots.length + 1;
-      const positions = distributeOnSphere(totalCount, 5);
+      if (newlyCreated.length === 0) return;
 
-      const { data: created, error } = await supabase
-        .from('graph_nodes')
-        .insert({
-          user_id: userId,
-          wiki_title: title,
-          label: title,
-          parent_id: null,
-          is_root: true,
-          position_x: positions[totalCount - 1].x,
-          position_y: positions[totalCount - 1].y,
-          position_z: positions[totalCount - 1].z,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      // Redistribute ALL root positions so they stay evenly spread
-      const newRoots = [...existingRoots, created as GraphNode];
-      const freshPositions = distributeOnSphere(newRoots.length, 5);
-      const updates = newRoots.map((root, i) => ({
+      // Step 3: Redistribute ALL root positions on the sphere so everything
+      // stays evenly spread.
+      set({ loadingMessage: 'Placing nodes...' });
+      const allRoots = [...existingRoots, ...newlyCreated];
+      const freshPositions = distributeOnSphere(allRoots.length, 5);
+      const updates = allRoots.map((root, i) => ({
         ...root,
         position_x: freshPositions[i].x,
         position_y: freshPositions[i].y,
         position_z: freshPositions[i].z,
       }));
+
       // Persist updated positions (fire-and-forget)
       for (const u of updates) {
         supabase
@@ -545,10 +587,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           .eq('id', u.id)
           .then(() => {});
       }
-      // Compute edges between all roots (fire-and-forget visual update)
+
+      // Step 4: Show the new roots immediately, then compute edges async.
       set({ rootNodes: updates, currentNodes: updates, currentEdges: [] });
       computeNodeEdges(updates).then((edges) => {
-        // Only apply if we're still at root level
         if (get().path.length === 0) {
           set({ currentEdges: edges });
         }
