@@ -887,26 +887,22 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     }
   },
 
-  /* ---- Reset everything ---- */
+  /* ---- Delete everything and reload ---- */
   reset: async () => {
     const { userId } = get();
     if (!userId) return;
-    set({ loading: true, loadingMessage: 'Resetting...' });
-    try {
-      const supabase = createClient();
-      await supabase.from('graph_nodes').delete().eq('user_id', userId);
-      set({
-        rootNodes: [],
-        currentNodes: [],
-        currentEdges: [],
-        currentParent: null,
-        outerContextNodes: [],
-        path: [],
-        sidebarOpen: false,
-      });
-    } finally {
-      set({ loading: false, loadingMessage: '' });
-    }
+    const supabase = createClient();
+    await supabase.from('graph_nodes').delete().eq('user_id', userId);
+    set({
+      path: [],
+      rootNodes: [],
+      currentNodes: [],
+      currentEdges: [],
+      currentParent: null,
+      outerContextNodes: [],
+      sidebarOpen: false,
+      diveAnimation: emptyAnimation,
+    });
   },
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),

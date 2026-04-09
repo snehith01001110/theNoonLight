@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { getWikiSummary, resolveWikiTitle } from '@/lib/wikipedia';
+import { getWikiSummary } from '@/lib/wikipedia';
 import { createClient } from '@/lib/supabase-server';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -21,16 +21,6 @@ export async function POST(req: Request) {
 
     const supabase = createClient();
 
-    // 0. Resolve the actual Wikipedia title first. This is a lightweight call
-    //    that catches disambiguation pages early so we don't cache wrong summaries.
-    let resolvedTitle: string;
-    try {
-      resolvedTitle = await resolveWikiTitle(title);
-    } catch {
-      resolvedTitle = title; // fallback to original on any error
-    }
-    const titleChanged = resolvedTitle !== title;
-
     // 1. Check per-user cache on the graph_node row
     if (nodeId) {
       const { data: existing } = await supabase
@@ -39,41 +29,35 @@ export async function POST(req: Request) {
         .eq('id', nodeId)
         .single();
       if (existing?.summary) {
-        return NextResponse.json({
-          summary: existing.summary,
-          cached: true,
-          resolvedTitle: titleChanged ? resolvedTitle : undefined,
-        });
+        return NextResponse.json({ summary: existing.summary, cached: true });
       }
     }
 
-    // 2. Check the shared summaries table under the RESOLVED title
+    // 2. Check the shared summaries table
     const { data: shared } = await supabase
       .from('summaries')
       .select('summary')
-      .eq('wiki_title', resolvedTitle)
+      .eq('wiki_title', title)
       .maybeSingle();
 
     if (shared?.summary) {
-      // Cache onto graph_node too
       if (nodeId) {
-        const updatePayload: Record<string, string> = { summary: shared.summary };
-        if (titleChanged) updatePayload.wiki_title = resolvedTitle;
-        await supabase.from('graph_nodes').update(updatePayload).eq('id', nodeId);
+        await supabase
+          .from('graph_nodes')
+          .update({ summary: shared.summary })
+          .eq('id', nodeId);
       }
-      return NextResponse.json({
-        summary: shared.summary,
-        cached: true,
-        source: 'shared',
-        resolvedTitle: titleChanged ? resolvedTitle : undefined,
-      });
+      return NextResponse.json({ summary: shared.summary, cached: true, source: 'shared' });
     }
 
-    // 3. Fetch Wikipedia extract and ask Claude
-    const wiki = await getWikiSummary(resolvedTitle);
+    // 3. Fetch Wikipedia extract (handles disambiguation internally)
+    const wiki = await getWikiSummary(title);
     if (!wiki || !wiki.extract) {
       return NextResponse.json({ error: 'No extract available' }, { status: 404 });
     }
+
+    // wiki.title may differ from requested title if disambiguation was resolved
+    const resolvedTitle = wiki.title;
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -90,22 +74,20 @@ export async function POST(req: Request) {
       .join('\n')
       .trim();
 
-    // 4. Write to both caches under the resolved title
+    // 4. Cache the summary
     await supabase
       .from('summaries')
       .upsert({ wiki_title: resolvedTitle, summary: text, updated_at: new Date().toISOString() });
 
     if (nodeId) {
-      const updatePayload: Record<string, string> = { summary: text };
-      if (titleChanged) updatePayload.wiki_title = resolvedTitle;
-      await supabase.from('graph_nodes').update(updatePayload).eq('id', nodeId);
+      await supabase.from('graph_nodes').update({ summary: text }).eq('id', nodeId);
     }
 
     return NextResponse.json({
       summary: text,
       cached: false,
       source: 'claude',
-      resolvedTitle: titleChanged ? resolvedTitle : undefined,
+      resolvedTitle: resolvedTitle !== title ? resolvedTitle : undefined,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e.message ?? 'Failed' }, { status: 500 });

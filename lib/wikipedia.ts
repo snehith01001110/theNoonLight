@@ -75,46 +75,6 @@ export async function getIntroLinks(title: string): Promise<string[]> {
     .filter((t) => !isJunkLink(t));
 }
 
-/**
- * Lightweight title resolution: checks if a Wikipedia title is a disambiguation
- * page and resolves it to the most relevant actual article. Returns the original
- * title if it's already a real article.
- */
-export async function resolveWikiTitle(title: string): Promise<string> {
-  const url = `${WIKI_REST}/page/summary/${encodeURIComponent(title)}`;
-  const res = await fetch(url, { next: { revalidate: 3600 } });
-  if (!res.ok) return title;
-  const data = await res.json();
-
-  if (data.type !== 'disambiguation') {
-    return data.title || title;
-  }
-
-  // Disambiguation page — use Wikipedia search to find the best match
-  const searchResult = await searchWikipedia(title);
-  if (searchResult && searchResult.toLowerCase() !== title.toLowerCase()) {
-    return searchResult;
-  }
-
-  // Fallback: scan intro links for closest match
-  const links = await getIntroLinks(title);
-  const allLinks = links.length > 0 ? links : await getWikiLinks(title);
-  const lowerTitle = title.toLowerCase();
-
-  const scored = allLinks
-    .filter((l) => !l.toLowerCase().includes('('))
-    .map((l) => {
-      const lower = l.toLowerCase();
-      let score = 0;
-      if (lower.startsWith(lowerTitle)) score += 10;
-      if (lower.includes(lowerTitle)) score += 5;
-      return { link: l, score };
-    })
-    .sort((a, b) => b.score - a.score);
-
-  return scored[0]?.link ?? allLinks[0] ?? title;
-}
-
 export async function getWikiSummary(title: string): Promise<{
   title: string;
   extract: string;
