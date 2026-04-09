@@ -94,25 +94,26 @@ export default function Sidebar() {
         ref={sidebarRef}
         className="
           fixed z-30 flex flex-col bg-[#0b0d14]/95 backdrop-blur-md border-slate-800
-          max-md:inset-x-0 max-md:bottom-0 max-md:h-[55vh] max-md:rounded-t-2xl max-md:border-t
+          max-md:inset-x-0 max-md:bottom-0 max-md:h-[70vh] max-md:rounded-t-2xl max-md:border-t
           md:top-0 md:right-0 md:h-full md:w-[420px] md:max-w-[90vw] md:border-l
-          animate-slide-in-right
+          max-md:animate-slide-in-bottom md:animate-slide-in-right
         "
       >
         <div className="md:hidden flex justify-center pt-2 pb-1">
           <div className="w-10 h-1 rounded-full bg-slate-600/60" />
         </div>
 
-        <div className="p-4 md:p-5 max-md:pt-2 border-b border-slate-800 flex items-start justify-between">
+        <div className="md:hidden h-0.5 bg-gradient-to-r from-emerald-500/40 via-sky-500/40 to-violet-500/40" />
+        <div className="p-4 md:p-5 max-md:pt-2 max-md:pb-3 border-b border-slate-800 flex items-start justify-between">
           <div className="min-w-0 flex-1">
-            <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">
+            <div className="text-xs max-md:text-[10px] uppercase tracking-widest text-slate-500 mb-1">
               Currently exploring
             </div>
             <h2 className="text-emerald-400 text-xl md:text-2xl font-light leading-tight truncate">
               {currentParent.label}
             </h2>
             <div className="flex items-center gap-3 mt-1">
-              <div className="text-xs text-slate-500">
+              <div className="text-xs max-md:text-[10px] text-slate-500">
                 {currentNodes.length} subtopics
               </div>
               {currentParent.wiki_title && (
@@ -150,7 +151,7 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4" ref={scrollRef}>
+        <div className="flex-1 overflow-y-auto p-4 md:p-5 max-md:p-3 space-y-4 max-md:space-y-3" ref={scrollRef}>
           <section>
             <RichSummary markdown={currentParent.summary ?? ''} />
           </section>
@@ -163,7 +164,7 @@ export default function Sidebar() {
               {messages.map((m, i) => (
                 <div
                   key={i}
-                  className={`text-sm leading-relaxed ${
+                  className={`text-sm max-md:text-xs leading-relaxed ${
                     m.role === 'user'
                       ? 'text-slate-300 bg-slate-800/40 p-3 rounded'
                       : 'text-slate-100'

@@ -78,6 +78,21 @@ input::placeholder {
   animation: slide-in-right 0.25s ease-out;
 }
 
+@keyframes slide-in-bottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-bottom {
+  animation: slide-in-bottom 0.25s ease-out;
+}
+
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
