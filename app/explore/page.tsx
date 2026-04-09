@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase-browser';
 import { useGraphStore } from '@/lib/store';
@@ -13,7 +13,7 @@ import TopBar from '@/components/TopBar';
 // Disable SSR for the 3D canvas
 const Scene = dynamic(() => import('@/components/Scene'), { ssr: false });
 
-export default function ExplorePage() {
+function ExploreContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setUserId = useGraphStore((s) => s.setUserId);
@@ -83,5 +83,13 @@ export default function ExplorePage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function ExplorePage() {
+  return (
+    <Suspense>
+      <ExploreContent />
+    </Suspense>
   );
 }
