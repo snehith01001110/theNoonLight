@@ -45,7 +45,7 @@ interface GraphState {
   startTopic: (query: string) => Promise<void>;
   diveInto: (nodeId: string) => Promise<void>;
   goBack: () => void;
-  goToLevel: (depth: number) => Promise<void>;
+  goToLevel: (depth: number, openSidebar?: boolean) => Promise<void>;
   reset: () => Promise<void>;
   setSidebarOpen: (open: boolean) => void;
 }
@@ -786,12 +786,12 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         EMERGE_DURATION
       );
     } else {
-      get().goToLevel(newPath.length - 1);
+      get().goToLevel(newPath.length - 1, false);
     }
   },
 
   /* ---- Jump to a specific depth (e.g. breadcrumb click) ---- */
-  goToLevel: async (depth: number) => {
+  goToLevel: async (depth: number, openSidebar = true) => {
     const { path, userId, rootNodes } = get();
     if (!userId) return;
     if (depth < 0) {
@@ -864,7 +864,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         currentNodes: childResult.nodes,
         currentEdges: childResult.edges,
         outerContextNodes: [],
-        sidebarOpen: true,
+        sidebarOpen: openSidebar,
         diveAnimation: {
           phase: 'emerging',
           targetPos: null,
