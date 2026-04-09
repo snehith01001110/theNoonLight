@@ -44,7 +44,7 @@ export default function LandingPage() {
       />
 
       {/* Animated logo */}
-      <div className="relative w-28 h-28 mb-12">
+      <div className="relative w-20 h-20 mb-8 md:w-28 md:h-28 md:mb-12">
         <div className="logo-ring absolute inset-0 border border-slate-600/40 rounded-full" />
         <div className="logo-ring-reverse absolute inset-3 border border-slate-500/25 rounded-full" />
         <div className="absolute inset-6 border border-slate-500/15 rounded-full" />
@@ -54,8 +54,8 @@ export default function LandingPage() {
       </div>
 
       <h1
-        className="text-slate-100 text-center mb-10 select-none"
-        style={{ fontWeight: 200, fontSize: '42px', lineHeight: 1.1, letterSpacing: '-0.01em' }}
+        className="text-slate-100 text-center mb-8 md:mb-10 select-none text-[28px] md:text-[42px]"
+        style={{ fontWeight: 200, lineHeight: 1.1, letterSpacing: '-0.01em' }}
       >
         I want to learn
       </h1>
@@ -80,7 +80,7 @@ export default function LandingPage() {
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             placeholder="Type a topic..."
-            className="w-full bg-transparent text-slate-100 text-lg py-4 px-5 pr-20 focus:outline-none placeholder-slate-500 font-light"
+            className="w-full bg-transparent text-slate-100 text-base md:text-lg py-3 md:py-4 px-4 md:px-5 pr-16 md:pr-20 focus:outline-none placeholder-slate-500 font-light"
             autoFocus
             autoComplete="off"
           />

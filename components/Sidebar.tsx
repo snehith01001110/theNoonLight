@@ -82,13 +82,13 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed top-0 right-0 h-full w-[420px] max-w-[90vw] bg-[#0b0d14]/95 backdrop-blur-md border-l border-slate-800 z-30 flex flex-col">
-      <div className="p-5 border-b border-slate-800 flex items-start justify-between">
+    <aside className="fixed top-0 right-0 h-full w-full md:w-[420px] md:max-w-[90vw] bg-[#0b0d14]/95 backdrop-blur-md border-l border-slate-800 z-30 flex flex-col animate-slide-in-right">
+      <div className="p-4 md:p-5 border-b border-slate-800 flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">
             Currently exploring
           </div>
-          <h2 className="text-emerald-400 text-2xl font-light leading-tight">
+          <h2 className="text-emerald-400 text-xl md:text-2xl font-light leading-tight">
             {currentParent.label}
           </h2>
           <div className="flex items-center gap-3 mt-1">
@@ -123,14 +123,14 @@ export default function Sidebar() {
         </div>
         <button
           onClick={() => setSidebarOpen(false)}
-          className="text-slate-500 hover:text-slate-200 text-xl leading-none"
+          className="text-slate-500 hover:text-slate-200 text-2xl md:text-xl leading-none p-1 -mr-1"
           aria-label="Close"
         >
           ×
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4" ref={scrollRef}>
         <section>
           <RichSummary markdown={currentParent.summary ?? ''} />
         </section>
@@ -159,7 +159,7 @@ export default function Sidebar() {
         )}
       </div>
 
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-3 md:p-4 border-t border-slate-800 pb-safe">
         <form
           onSubmit={(e) => {
             e.preventDefault();

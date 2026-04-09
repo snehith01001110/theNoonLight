@@ -23,7 +23,7 @@ export default function PromptInput() {
   return (
     <form
       onSubmit={submit}
-      className="fixed top-4 right-4 z-20 flex items-center gap-2"
+      className="fixed top-4 left-3 right-3 md:left-auto md:right-4 z-20 flex items-center gap-2"
     >
       <input
         type="text"
@@ -31,12 +31,12 @@ export default function PromptInput() {
         onChange={(e) => setValue(e.target.value)}
         placeholder="Add a topic…"
         disabled={loading}
-        className="bg-slate-900/80 backdrop-blur border border-slate-800 text-slate-200 text-sm px-3 py-2 rounded focus:outline-none focus:border-sky-500 w-56"
+        className="bg-slate-900/80 backdrop-blur border border-slate-800 text-slate-200 text-sm px-3 py-2.5 md:py-2 rounded focus:outline-none focus:border-sky-500 flex-1 md:flex-none md:w-56"
       />
       <button
         type="submit"
         disabled={loading || !value.trim()}
-        className="px-4 py-2 bg-sky-500/20 border border-sky-500/40 text-sky-300 text-sm rounded hover:bg-sky-500/30 disabled:opacity-40"
+        className="px-4 py-2.5 md:py-2 bg-sky-500/20 border border-sky-500/40 text-sky-300 text-sm rounded hover:bg-sky-500/30 disabled:opacity-40 shrink-0"
       >
         Add
       </button>
