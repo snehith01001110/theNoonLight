@@ -115,6 +115,39 @@ async function fetchAncestorTitles(
   return path.map((id) => byId.get(id)).filter((t): t is string => !!t);
 }
 
+/**
+ * Walk up parent_id links from a node to reconstruct its full ancestor path.
+ * Returns [root_id, ..., parent_id] (does NOT include the node itself).
+ */
+async function buildAncestorPath(
+  supabase: any,
+  nodeId: string
+): Promise<string[]> {
+  const path: string[] = [];
+  let currentId: string | null = nodeId;
+
+  // Fetch the starting node to get its parent_id
+  const { data: startNode } = await supabase
+    .from('graph_nodes')
+    .select('parent_id')
+    .eq('id', currentId)
+    .single();
+  currentId = startNode?.parent_id ?? null;
+
+  // Walk up the chain (max 20 levels to prevent infinite loops)
+  let safety = 20;
+  while (currentId && safety-- > 0) {
+    path.unshift(currentId);
+    const { data: ancestor } = await supabase
+      .from('graph_nodes')
+      .select('parent_id')
+      .eq('id', currentId)
+      .single();
+    currentId = ancestor?.parent_id ?? null;
+  }
+  return path;
+}
+
 /** Ask Haiku to curate subtopics from Wikipedia links. */
 async function curateSubtopics(
   topic: string,
@@ -196,10 +229,11 @@ function buildVirtualChildren(
       ? Math.max(0, Math.min(1, sj.relevance[origIdx]))
       : 0.5
   );
+  const hasSizeData = Array.isArray(sj.size) && sj.size.length > 0;
   const sizeArr = filteredPairs.map(({ origIdx }) =>
-    sj.size?.[origIdx] !== undefined
-      ? Math.max(0, Math.min(1, sj.size[origIdx]))
-      : 0.5
+    hasSizeData && sj.size![origIdx] !== undefined
+      ? Math.max(0, Math.min(1, sj.size![origIdx]))
+      : undefined
   );
 
   // Run force-directed layout — positions now reflect relevance (gravity)
@@ -225,7 +259,7 @@ function buildVirtualChildren(
       is_root: false,
       visited: visitedTitles.has(title.toLowerCase()),
       created_at: '',
-      topicSize: sizeArr[i],
+      topicSize: sizeArr[i] ?? undefined,
     };
   });
 
@@ -237,6 +271,25 @@ function buildVirtualChildren(
   }
 
   return { nodes, edges: edgePairs };
+}
+
+/** Compute edges between an array of nodes via wiki link intersection. */
+async function computeNodeEdges(nodes: GraphNode[]): Promise<EdgePair[]> {
+  if (nodes.length < 2) return [];
+  try {
+    const res = await fetch('/api/wiki/edges', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ titles: nodes.map((n) => n.wiki_title) }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return ((data.edges ?? []) as [number, number][])
+      .filter(([i, j]) => nodes[i] && nodes[j])
+      .map(([i, j]) => [nodes[i].id, nodes[j].id] as EdgePair);
+  } catch {
+    return [];
+  }
 }
 
 /** Which children of parentId have been dived into (have their own row)? */
@@ -344,10 +397,11 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     try {
       const supabase = createClient();
       const roots = await fetchRootNodes(supabase, userId);
+      const rootEdges = await computeNodeEdges(roots);
       set({
         rootNodes: roots,
         currentNodes: roots,
-        currentEdges: [],
+        currentEdges: rootEdges,
         currentParent: null,
         outerContextNodes: [],
         path: [],
@@ -374,15 +428,79 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
       const existingRoots = get().rootNodes;
 
-      // Don't add a duplicate — if this topic already exists as a root, just
-      // dive into the existing one instead.
-      const duplicate = existingRoots.find(
+      // Helper: navigate to a node deep in the graph with the correct
+      // ancestor path (so breadcrumb shows Home > Human > Cognition, and
+      // Back goes to the parent level, not Home).
+      const navigateToExisting = async (
+        targetNodeId: string,
+        ancestorPath: string[]
+      ) => {
+        set({ loading: false, loadingMessage: '' });
+        if (ancestorPath.length > 0) {
+          // First navigate to the parent level so currentNodes/currentParent
+          // are set correctly, then dive into the target.
+          const parentDepth = ancestorPath.length - 1;
+          // Temporarily set path so goToLevel can slice it
+          set({ path: ancestorPath });
+          await get().goToLevel(parentDepth);
+        }
+        // Now dive into the target — this appends it to the path
+        await get().diveInto(targetNodeId);
+      };
+
+      // Don't add a duplicate — check if this topic exists ANYWHERE in the
+      // user's graph. If found, navigate with full ancestor path.
+      const duplicateRoot = existingRoots.find(
         (r) => r.wiki_title.toLowerCase() === title.toLowerCase()
       );
-      if (duplicate) {
+      if (duplicateRoot) {
         set({ loading: false, loadingMessage: '' });
-        get().diveInto(duplicate.id);
+        get().diveInto(duplicateRoot.id);
         return;
+      }
+
+      // Check child nodes (rows created when the user dived into them)
+      const { data: existingChild } = await supabase
+        .from('graph_nodes')
+        .select('id, parent_id')
+        .eq('user_id', userId)
+        .ilike('wiki_title', title)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingChild) {
+        const ancestors = await buildAncestorPath(supabase, existingChild.id);
+        await navigateToExisting(existingChild.id, ancestors);
+        return;
+      }
+
+      // Check virtual children: topic might be listed in a parent's
+      // subtopics_json even though the user hasn't clicked into it yet.
+      const titleLower = title.toLowerCase();
+      const { data: parentWithChild } = await supabase
+        .from('graph_nodes')
+        .select('id, subtopics_json')
+        .eq('user_id', userId)
+        .not('subtopics_json', 'is', null)
+        .limit(50);
+
+      if (parentWithChild) {
+        for (const row of parentWithChild) {
+          const sj = row.subtopics_json as { titles?: string[] } | null;
+          if (!sj?.titles) continue;
+          const match = sj.titles.find(
+            (t: string) => t.toLowerCase() === titleLower
+          );
+          if (match) {
+            // Found as a virtual child — navigate with proper path
+            const virtualId = `v|${row.id}|${match}`;
+            // The parent of this virtual node is row.id — build path to it
+            const ancestors = await buildAncestorPath(supabase, row.id);
+            const fullAncestorPath = [...ancestors, row.id];
+            await navigateToExisting(virtualId, fullAncestorPath);
+            return;
+          }
+        }
       }
 
       const totalCount = existingRoots.length + 1;
@@ -425,7 +543,14 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           .eq('id', u.id)
           .then(() => {});
       }
+      // Compute edges between all roots (fire-and-forget visual update)
       set({ rootNodes: updates, currentNodes: updates, currentEdges: [] });
+      computeNodeEdges(updates).then((edges) => {
+        // Only apply if we're still at root level
+        if (get().path.length === 0) {
+          set({ currentEdges: edges });
+        }
+      });
     } finally {
       set({ loading: false, loadingMessage: '' });
     }
@@ -650,6 +775,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           startedAt: performance.now(),
         },
       });
+      // Recompute root edges asynchronously
+      computeNodeEdges(rootNodes).then((edges) => {
+        if (get().path.length === 0) set({ currentEdges: edges });
+      });
       setTimeout(
         () => set({ diveAnimation: emptyAnimation }),
         EMERGE_DURATION
@@ -678,6 +807,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           previewEdges: [],
           startedAt: performance.now(),
         },
+      });
+      computeNodeEdges(rootNodes).then((edges) => {
+        if (get().path.length === 0) set({ currentEdges: edges });
       });
       setTimeout(
         () => set({ diveAnimation: emptyAnimation }),

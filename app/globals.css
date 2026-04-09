@@ -18,6 +18,27 @@ body {
   box-sizing: border-box;
 }
 
+/* Force dark inputs everywhere — prevent autofill white flash */
+input,
+textarea,
+select {
+  color: #e2e8f0;
+  background-color: #0f172a;
+  color-scheme: dark;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e2e8f0 !important;
+  -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+input::placeholder {
+  color: #475569;
+}
+
 @keyframes spin-slow {
   from {
     transform: rotate(0deg);
