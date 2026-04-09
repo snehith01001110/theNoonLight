@@ -221,9 +221,10 @@ Pick 12–15 subtopics most useful for learning "${topic}" and return the JSON.`
 
     return NextResponse.json({ subtopics, edges, edge_weights: edgeWeights, relevance, size });
   } catch (e: any) {
+    console.error('[api/subtopics] error:', e?.status ?? '', e?.message ?? e);
     return NextResponse.json(
-      { error: e?.message || 'Failed to curate subtopics' },
-      { status: 500 }
+      { error: e?.message || 'Failed to curate subtopics', code: e?.status ?? 'UNKNOWN' },
+      { status: e?.status === 429 ? 429 : 500 }
     );
   }
 }

@@ -90,6 +90,10 @@ export async function POST(req: Request) {
       resolvedTitle: resolvedTitle !== title ? resolvedTitle : undefined,
     });
   } catch (e: any) {
-    return NextResponse.json({ error: e.message ?? 'Failed' }, { status: 500 });
+    console.error('[api/summarize] error:', e?.status ?? '', e?.message ?? e);
+    return NextResponse.json(
+      { error: e.message ?? 'Failed', code: e?.status ?? 'UNKNOWN' },
+      { status: e?.status === 429 ? 429 : 500 }
+    );
   }
 }
