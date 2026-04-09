@@ -64,7 +64,7 @@ function ExploreContent() {
       )}
 
       {loading && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 px-5 py-3 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-full text-sm text-slate-300 flex items-center gap-3">
+        <div className="fixed bottom-16 md:bottom-6 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 px-4 md:px-5 py-3 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-full text-sm text-slate-300 flex items-center justify-center gap-3">
           <div className="w-2 h-2 bg-sky-400 rounded-full animate-pulse"></div>
           {loadingMessage || 'Loading...'}
         </div>
@@ -72,12 +72,12 @@ function ExploreContent() {
 
       {userId && useGraphStore.getState().rootNodes.length === 0 && !loading && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="text-center pointer-events-auto">
+          <div className="text-center pointer-events-auto px-6">
             <div className="text-slate-500 text-sm uppercase tracking-widest mb-3">
               Empty Graph
             </div>
-            <div className="text-slate-300 text-xl font-light">
-              Add a topic in the top right to begin exploring.
+            <div className="text-slate-300 text-lg md:text-xl font-light">
+              Add a topic above to begin exploring.
             </div>
           </div>
         </div>

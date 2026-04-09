@@ -82,39 +82,34 @@ export default function Sidebar() {
     }
   }
 
+            </div>
   return (
     <>
-      {/* Click-away overlay — tap anywhere outside sidebar to close */}
       <div
         className="fixed inset-0 z-20"
         onClick={() => setSidebarOpen(false)}
         aria-hidden
       />
 
-      {/* Sidebar panel
-          Desktop: right side panel, 420px wide
-          Mobile:  bottom sheet, 55vh tall, full width */}
       <aside
         ref={sidebarRef}
         className="
-          fixed z-30 flex flex-col
-          bg-[#0b0d14]/95 backdrop-blur-md border-slate-800
-          /* Desktop: right panel */
+          fixed z-30 flex flex-col bg-[#0b0d14]/95 backdrop-blur-md border-slate-800
           max-md:inset-x-0 max-md:bottom-0 max-md:h-[55vh] max-md:rounded-t-2xl max-md:border-t
-          md:top-0 md:right-0 md:h-full md:w-[420px] md:border-l
+          md:top-0 md:right-0 md:h-full md:w-[420px] md:max-w-[90vw] md:border-l
+          animate-slide-in-right
         "
       >
-        {/* Mobile drag handle */}
         <div className="md:hidden flex justify-center pt-2 pb-1">
           <div className="w-10 h-1 rounded-full bg-slate-600/60" />
         </div>
 
-        <div className="p-5 max-md:pt-2 border-b border-slate-800 flex items-start justify-between">
+        <div className="p-4 md:p-5 max-md:pt-2 border-b border-slate-800 flex items-start justify-between">
           <div className="min-w-0 flex-1">
             <div className="text-xs uppercase tracking-widest text-slate-500 mb-1">
               Currently exploring
             </div>
-            <h2 className="text-emerald-400 text-2xl font-light leading-tight truncate">
+            <h2 className="text-emerald-400 text-xl md:text-2xl font-light leading-tight truncate">
               {currentParent.label}
             </h2>
             <div className="flex items-center gap-3 mt-1">
@@ -149,14 +144,14 @@ export default function Sidebar() {
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="text-slate-500 hover:text-slate-200 text-xl leading-none ml-3 p-2 -mr-2 -mt-1"
+            className="text-slate-500 hover:text-slate-200 text-2xl md:text-xl leading-none p-1 -mr-1"
             aria-label="Close"
           >
             ×
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-4" ref={scrollRef}>
+        <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4" ref={scrollRef}>
           <section>
             <RichSummary markdown={currentParent.summary ?? ''} />
           </section>
@@ -178,14 +173,14 @@ export default function Sidebar() {
                   <div className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">
                     {m.role === 'user' ? 'You' : 'Claude'}
                   </div>
-                  <div className="whitespace-pre-wrap">{m.content || '…'}</div>
+                  <div className="whitespace-pre-wrap">{m.content || '...'}</div>
                 </div>
               ))}
             </section>
           )}
         </div>
 
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-3 md:p-4 border-t border-slate-800 pb-safe">
           <form
             onSubmit={(e) => {
               e.preventDefault();

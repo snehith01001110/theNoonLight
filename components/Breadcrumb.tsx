@@ -29,19 +29,19 @@ export default function Breadcrumb() {
   }, [path]);
 
   return (
-    <nav className="fixed top-4 left-4 z-20 flex items-center gap-2 text-sm">
+    <nav className="fixed top-4 left-3 md:left-4 z-20 flex items-center gap-1.5 md:gap-2 text-sm max-w-[70vw] md:max-w-none overflow-x-auto scrollbar-hide">
       <button
         onClick={() => goToLevel(-1)}
-        className="text-slate-400 hover:text-sky-300 transition-colors"
+        className="text-slate-400 hover:text-sky-300 transition-colors shrink-0"
       >
         Home
       </button>
       {labels.map((label, i) => (
-        <span key={i} className="flex items-center gap-2">
+        <span key={i} className="flex items-center gap-1.5 md:gap-2 shrink-0">
           <span className="text-slate-600">›</span>
           <button
             onClick={() => goToLevel(i)}
-            className={`transition-colors ${
+            className={`transition-colors truncate max-w-[120px] md:max-w-none ${
               i === labels.length - 1
                 ? 'text-emerald-400'
                 : 'text-slate-400 hover:text-sky-300'
