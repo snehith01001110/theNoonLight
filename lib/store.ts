@@ -235,6 +235,8 @@ function buildVirtualChildren(
       ? Math.max(0, Math.min(1, sj.size![origIdx]))
       : undefined
   );
+  // forceLayout needs plain numbers — default missing sizes to 0.5
+  const sizeArrNumeric = sizeArr.map((v) => v ?? 0.5);
 
   // Run force-directed layout — positions now reflect relevance (gravity)
   // and edge weights (springs pull related nodes together)
@@ -242,7 +244,7 @@ function buildVirtualChildren(
     filteredPairs.length,
     forceEdges,
     relevanceArr,
-    sizeArr
+    sizeArrNumeric
   );
 
   const nodes: GraphNode[] = filteredPairs.map(({ title, origIdx }, i) => {
