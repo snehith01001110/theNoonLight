@@ -58,3 +58,40 @@ input::placeholder {
 .node-label {
   user-select: none;
 }
+
+/* Sidebar slide-in animation */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out;
+}
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area for notched phones */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Better touch targets on mobile */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  input {
+    min-height: 44px;
+  }
+}
