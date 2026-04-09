@@ -10,6 +10,7 @@ export default function Sidebar() {
   const currentNodes = useGraphStore((s) => s.currentNodes);
   const sidebarOpen = useGraphStore((s) => s.sidebarOpen);
   const setSidebarOpen = useGraphStore((s) => s.setSidebarOpen);
+  const summaryStatus = useGraphStore((s) => s.summaryStatus);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -153,7 +154,34 @@ export default function Sidebar() {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-5 max-md:p-3 space-y-4 max-md:space-y-3" ref={scrollRef}>
           <section>
-            <RichSummary markdown={currentParent.summary ?? ''} />
+            {summaryStatus === 'loading' && !currentParent.summary ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-3 w-24 bg-slate-700/60 rounded" />
+                <div className="space-y-2">
+                  <div className="h-2.5 w-full bg-slate-700/40 rounded" />
+                  <div className="h-2.5 w-5/6 bg-slate-700/40 rounded" />
+                </div>
+                <div className="h-3 w-28 bg-slate-700/60 rounded mt-4" />
+                <div className="space-y-2">
+                  <div className="h-2.5 w-full bg-slate-700/40 rounded" />
+                  <div className="h-2.5 w-4/6 bg-slate-700/40 rounded" />
+                  <div className="h-2.5 w-5/6 bg-slate-700/40 rounded" />
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="w-1.5 h-1.5 bg-sky-400/60 rounded-full animate-[pulse_1.4s_ease-in-out_infinite]" />
+                  <span className="text-xs text-slate-500">Generating summary...</span>
+                </div>
+              </div>
+            ) : summaryStatus === 'error' && !currentParent.summary ? (
+              <div className="text-slate-500 text-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-amber-500/70 shrink-0">
+                  <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+                Couldn&apos;t load summary. Try diving in again.
+              </div>
+            ) : (
+              <RichSummary markdown={currentParent.summary ?? ''} />
+            )}
           </section>
 
           {messages.length > 0 && (

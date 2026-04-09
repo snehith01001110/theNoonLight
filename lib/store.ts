@@ -7,6 +7,7 @@ import { distributeOnSphere } from './wikipedia';
 import { forceLayout, ForceEdge } from './force-layout';
 
 export type DivePhase = 'idle' | 'previewing' | 'emerging';
+export type SummaryStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 interface DiveAnimation {
   phase: DivePhase;
@@ -38,6 +39,7 @@ interface GraphState {
   loading: boolean;
   loadingMessage: string;
   sidebarOpen: boolean;
+  summaryStatus: SummaryStatus;
   diveAnimation: DiveAnimation;
 
   setUserId: (id: string | null) => void;
@@ -387,6 +389,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   loading: false,
   loadingMessage: '',
   sidebarOpen: false,
+  summaryStatus: 'idle',
   diveAnimation: emptyAnimation,
 
   setUserId: (id) => set({ userId: id }),
@@ -692,6 +695,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
       // Load summary in parallel (doesn't block children)
       if (!node.summary) {
+        set({ summaryStatus: 'loading' });
         fetch('/api/summarize', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -709,11 +713,17 @@ export const useGraphStore = create<GraphState>((set, get) => ({
               // Force sidebar re-render by touching currentParent
               const s = get();
               if (s.currentParent?.id === realId) {
-                set({ currentParent: { ...node } });
+                set({ currentParent: { ...node }, summaryStatus: 'loaded' });
               }
+            } else {
+              set({ summaryStatus: 'error' });
             }
           })
-          .catch(() => {});
+          .catch(() => {
+            set({ summaryStatus: 'error' });
+          });
+      } else {
+        set({ summaryStatus: 'loaded' });
       }
 
       return childResult;
@@ -774,6 +784,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         currentEdges: [],
         outerContextNodes: [],
         sidebarOpen: false,
+        summaryStatus: 'idle',
         diveAnimation: {
           phase: 'emerging',
           targetPos: null,
@@ -807,6 +818,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         currentEdges: [],
         outerContextNodes: [],
         sidebarOpen: false,
+        summaryStatus: 'idle',
         diveAnimation: {
           phase: 'emerging',
           targetPos: null,
@@ -870,6 +882,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         currentEdges: childResult.edges,
         outerContextNodes: [],
         sidebarOpen: openSidebar,
+        summaryStatus: parent.summary ? 'loaded' : 'idle',
         diveAnimation: {
           phase: 'emerging',
           targetPos: null,
@@ -901,6 +914,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
       currentParent: null,
       outerContextNodes: [],
       sidebarOpen: false,
+      summaryStatus: 'idle',
       diveAnimation: emptyAnimation,
     });
   },
