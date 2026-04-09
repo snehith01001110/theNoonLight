@@ -14,7 +14,7 @@ export interface RelationshipType {
 
 interface RelationshipData {
   subtopicIndex: number;
-  type: 'subclass_of' | 'part_of';
+  type: 'subclass_of' | 'part_of' | 'related_to';
   confidence: number;
   parentQid?: string;
   subtopicQid?: string;

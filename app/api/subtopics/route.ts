@@ -99,14 +99,14 @@ ${pool.map((t, i) => `${i + 1}. ${t}`).join('\n')}
 
 Pick 12–15 subtopics most useful for learning "${topic}" and return the JSON.`;
 
-    const response = await anthropic.messages.create({
+    const claudeResponse = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1200,
       system: SYSTEM,
       messages: [{ role: 'user', content: userMsg }],
     });
 
-    const text = response.content
+    const text = claudeResponse.content
       .filter((b: any) => b.type === 'text')
       .map((b: any) => b.text)
       .join('\n')
@@ -239,15 +239,15 @@ Pick 12–15 subtopics most useful for learning "${topic}" and return the JSON.`
       console.warn('[api/subtopics] Wikidata enrichment failed or timed out:', (err as Error)?.message);
     }
 
-    const response: any = { subtopics, edges, edge_weights: edgeWeights, relevance, size };
+    const jsonResponse: any = { subtopics, edges, edge_weights: edgeWeights, relevance, size };
     if (relationshipTypes.length > 0) {
-      response.relationship_types = relationshipTypes;
+      jsonResponse.relationship_types = relationshipTypes;
     }
     if (wikidataEnriched) {
-      response.wikidata_enriched = true;
+      jsonResponse.wikidata_enriched = true;
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(jsonResponse);
   } catch (e: any) {
     console.error('[api/subtopics] error:', e?.status ?? '', e?.message ?? e);
     return NextResponse.json(

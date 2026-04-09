@@ -36,8 +36,10 @@ class LRUCache {
   set(key: string, entity: WikidataEntity): void {
     if (this.cache.size >= this.maxSize) {
       // Remove oldest entry
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
+      const firstKey = this.cache.keys().next().value as string | undefined;
+      if (firstKey) {
+        this.cache.delete(firstKey);
+      }
     }
     this.cache.set(key, { entity, timestamp: Date.now() });
   }
