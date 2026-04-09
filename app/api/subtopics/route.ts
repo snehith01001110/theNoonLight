@@ -6,6 +6,7 @@ import {
   combineLinks,
   getWikiSummary,
 } from '@/lib/wikipedia';
+import { enrichSubtopicsWithWikidata, boostEdgeWeightsWithEdges, buildRelationshipMetadataWithEdges } from '@/lib/wikidata-enrich';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -194,7 +195,7 @@ Pick 12–15 subtopics most useful for learning "${topic}" and return the JSON.`
     const rawEdgeWeights = Array.isArray(parsed.edge_weights) ? parsed.edge_weights : [];
     const edgeKey = new Set<string>();
     const edges: [number, number][] = [];
-    const edgeWeights: number[] = [];
+    let edgeWeights: number[] = [];
     for (let ei = 0; ei < rawEdges.length; ei++) {
       const e = rawEdges[ei];
       if (!Array.isArray(e) || e.length !== 2) continue;
@@ -219,7 +220,34 @@ Pick 12–15 subtopics most useful for learning "${topic}" and return the JSON.`
       edgeWeights.push(w);
     }
 
-    return NextResponse.json({ subtopics, edges, edge_weights: edgeWeights, relevance, size });
+    // Attempt Wikidata enrichment (non-blocking with graceful fallback)
+    let relationshipTypes: any[] = [];
+    let wikidataEnriched = false;
+    try {
+      const enrichment = await Promise.race([
+        enrichSubtopicsWithWikidata(subtopics, topic, edgeWeights),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+      ]);
+
+      if (enrichment && enrichment.relationship_types && enrichment.relationship_types.length > 0) {
+        edgeWeights = enrichment.edge_weights || edgeWeights;
+        relationshipTypes = enrichment.relationship_types;
+        wikidataEnriched = true;
+      }
+    } catch (err) {
+      // Silently ignore Wikidata enrichment failures — use Claude-only results
+      console.warn('[api/subtopics] Wikidata enrichment failed or timed out:', (err as Error)?.message);
+    }
+
+    const response: any = { subtopics, edges, edge_weights: edgeWeights, relevance, size };
+    if (relationshipTypes.length > 0) {
+      response.relationship_types = relationshipTypes;
+    }
+    if (wikidataEnriched) {
+      response.wikidata_enriched = true;
+    }
+
+    return NextResponse.json(response);
   } catch (e: any) {
     console.error('[api/subtopics] error:', e?.status ?? '', e?.message ?? e);
     return NextResponse.json(
