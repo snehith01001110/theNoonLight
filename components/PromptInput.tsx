@@ -17,7 +17,11 @@ export default function PromptInput() {
     if (!value.trim() || loading) return;
     const q = value.trim();
     setValue('');
-    await startTopic(q);
+    try {
+      await startTopic(q);
+    } catch (err) {
+      console.error('Search failed:', err);
+    }
   }
 
   return (

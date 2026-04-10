@@ -22,8 +22,17 @@ function ExploreContent() {
   const startTopic = useGraphStore((s) => s.startTopic);
   const loading = useGraphStore((s) => s.loading);
   const loadingMessage = useGraphStore((s) => s.loadingMessage);
+  const errorMessage = useGraphStore((s) => s.errorMessage);
+  const clearError = useGraphStore((s) => s.clearError);
   const userId = useGraphStore((s) => s.userId);
   const initialQueryProcessed = useRef(false);
+
+  // Auto-dismiss error after 5 seconds
+  useEffect(() => {
+    if (!errorMessage) return;
+    const t = setTimeout(clearError, 5000);
+    return () => clearTimeout(t);
+  }, [errorMessage, clearError]);
 
   useEffect(() => {
     async function init() {
@@ -74,6 +83,13 @@ function ExploreContent() {
         <div className="fixed bottom-16 md:bottom-6 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 px-4 md:px-5 py-3 bg-slate-900/90 backdrop-blur border border-slate-800 rounded-full text-sm text-slate-300 flex items-center justify-center gap-3">
           <div className="w-2 h-2 bg-sky-400 rounded-full animate-pulse"></div>
           {loadingMessage || 'Loading...'}
+        </div>
+      )}
+
+      {errorMessage && !loading && (
+        <div className="fixed bottom-16 md:bottom-6 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 z-40 px-4 md:px-5 py-3 bg-rose-950/90 backdrop-blur border border-rose-800/60 rounded-full text-sm text-rose-200 flex items-center justify-center gap-3">
+          <span>{errorMessage}</span>
+          <button onClick={clearError} className="text-rose-400 hover:text-rose-300 ml-1">✕</button>
         </div>
       )}
 

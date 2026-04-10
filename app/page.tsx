@@ -14,16 +14,22 @@ export default function LandingPage() {
     e.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    const q = encodeURIComponent(query.trim());
-    // Persist query so it survives the login redirect chain
-    sessionStorage.setItem('pendingQuery', query.trim());
-    if (user) {
-      router.push(`/explore?q=${q}`);
-    } else {
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const q = encodeURIComponent(query.trim());
+      // Persist query so it survives the login redirect chain
+      try { sessionStorage.setItem('pendingQuery', query.trim()); } catch {}
+      if (user) {
+        router.push(`/explore?q=${q}`);
+      } else {
+        router.push(`/auth/login?q=${q}`);
+      }
+    } catch {
+      // Auth check failed — skip straight to login with query preserved
+      const q = encodeURIComponent(query.trim());
       router.push(`/auth/login?q=${q}`);
     }
   }

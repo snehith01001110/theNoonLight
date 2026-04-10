@@ -37,6 +37,7 @@ interface GraphState {
   outerContextNodes: GraphNode[];
   loading: boolean;
   loadingMessage: string;
+  errorMessage: string;
   sidebarOpen: boolean;
   summaryStatus: SummaryStatus;
   diveAnimation: DiveAnimation;
@@ -49,6 +50,7 @@ interface GraphState {
   goToLevel: (depth: number, openSidebar?: boolean) => Promise<void>;
   reset: () => Promise<void>;
   setSidebarOpen: (open: boolean) => void;
+  clearError: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -493,11 +495,13 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   outerContextNodes: [],
   loading: false,
   loadingMessage: '',
+  errorMessage: '',
   sidebarOpen: false,
   summaryStatus: 'idle',
   diveAnimation: emptyAnimation,
 
   setUserId: (id) => set({ userId: id }),
+  clearError: () => set({ errorMessage: '' }),
 
   /* ---- Load root topics on page load ---- */
   loadInitial: async () => {
@@ -540,7 +544,7 @@ export const useGraphStore = create<GraphState>((set, get) => ({
   startTopic: async (query: string) => {
     const { userId } = get();
     if (!userId || !query.trim()) return;
-    set({ loading: true, loadingMessage: `Thinking about "${query}"...` });
+    set({ loading: true, loadingMessage: `Thinking about "${query}"...`, errorMessage: '' });
     try {
       const supabase = createClient();
 
@@ -588,9 +592,16 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         const searchRes = await fetch(
           `/api/wiki/search?q=${encodeURIComponent(concept)}`
         );
+        if (!searchRes.ok) {
+          console.error(`Wiki search failed for "${concept}": ${searchRes.status}`);
+          return null;
+        }
         const searchData = await searchRes.json();
         const title: string = searchData.title;
-        if (!title) return null;
+        if (!title) {
+          console.warn(`No Wikipedia article found for "${concept}"`);
+          return null;
+        }
 
         // Skip duplicates already in root list
         const duplicateRoot = existingRoots.find(
@@ -683,7 +694,10 @@ export const useGraphStore = create<GraphState>((set, get) => ({
         if (!isCompound && get().path.length > 0) return;
       }
 
-      if (newlyCreated.length === 0) return;
+      if (newlyCreated.length === 0) {
+        set({ errorMessage: `Couldn't find "${query}" — try a different search term.` });
+        return;
+      }
 
       // Step 3: Compute semantic layout for ALL roots using force-directed
       // placement based on Wikipedia link Jaccard similarity.
@@ -706,6 +720,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
       // Step 4: Show the new roots with semantic positions + weighted edges.
       set({ rootNodes: laidOut, currentNodes: laidOut, currentEdges: edges });
+    } catch (err: any) {
+      console.error('startTopic failed:', err);
+      set({ errorMessage: err?.message || 'Something went wrong. Please try again.' });
     } finally {
       set({ loading: false, loadingMessage: '' });
     }
