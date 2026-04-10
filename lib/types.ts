@@ -20,6 +20,15 @@ export interface GraphNode {
     relevance?: number[];
     /** Per-subtopic breadth/size as a knowledge field (0–1, drives sphere radius) */
     size?: number[];
+    /** Wikidata relationship metadata (optional, added by enrichment) */
+    relationship_types?: Array<{
+      edge: [number, number];
+      type: 'subclass_of' | 'part_of' | 'related_to';
+      source: 'wikidata' | 'claude';
+      confidence: number;
+    }>;
+    /** Whether Wikidata enrichment was applied to this node */
+    wikidata_enriched?: boolean;
   } | null;
   /** Visual size scale for this node's sphere (0–1, derived from topic breadth) */
   topicSize?: number;

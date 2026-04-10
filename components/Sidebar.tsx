@@ -30,6 +30,16 @@ export default function Sidebar() {
     }
   }, [messages]);
 
+  // Prevent body scrolling when sidebar is open on mobile
+  useEffect(() => {
+    if (sidebarOpen && window.innerWidth < 768) {
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [sidebarOpen]);
+
   if (!sidebarOpen || !currentParent) return null;
 
   async function sendMessage() {
