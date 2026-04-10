@@ -10,6 +10,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import PromptInput from '@/components/PromptInput';
 import TopBar from '@/components/TopBar';
 import SidebarReopenButton from '@/components/SidebarReopenButton';
+import OnboardingHints from '@/components/OnboardingHints';
 
 // Disable SSR for the 3D canvas
 const Scene = dynamic(() => import('@/components/Scene'), { ssr: false });
