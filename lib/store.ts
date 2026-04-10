@@ -622,33 +622,6 @@ export const useGraphStore = create<GraphState>((set, get) => ({
           return null;
         }
 
-        // Check virtual children in subtopics_json
-        const titleLower = title.toLowerCase();
-        const { data: parentWithChild } = await supabase
-          .from('graph_nodes')
-          .select('id, subtopics_json')
-          .eq('user_id', userId)
-          .not('subtopics_json', 'is', null)
-          .limit(50);
-
-        if (parentWithChild) {
-          for (const row of parentWithChild) {
-            const sj = row.subtopics_json as { titles?: string[] } | null;
-            if (!sj?.titles) continue;
-            const match = sj.titles.find(
-              (t: string) => t.toLowerCase() === titleLower
-            );
-            if (match) {
-              if (!isCompound) {
-                const virtualId = `v|${row.id}|${match}`;
-                const ancestors = await buildAncestorPath(supabase, row.id);
-                await navigateToExisting(virtualId, [...ancestors, row.id]);
-              }
-              return null;
-            }
-          }
-        }
-
         // Placeholder position — will be redistributed below
         const { data: created, error } = await supabase
           .from('graph_nodes')
