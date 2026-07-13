@@ -3,8 +3,9 @@
 A scroll-driven journey backward through 13.8 billion years, mapped onto one
 full trip around planet Earth at **true scale**: the equator's 40,075 km equals
 the age of the universe, so 1 year ≈ 2.9 mm. The journey starts at the
-visitor's location, flies due west along the great circle through their point,
-and arrives back at their exact coordinates — at the Big Bang.
+visitor's location, follows the great circle through their point that crosses
+the most land (see `src/data/landmask.js`), and arrives back at their exact
+coordinates — at the Big Bang.
 
 Live at **thenoonlight.com/beta**. The root site (`../index.html`) is a
 separate, untouched, self-contained page.

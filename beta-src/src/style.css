@@ -75,6 +75,31 @@ body {
 }
 #caption.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
+/* ── chapter / era transition ────────────────────────────────────── */
+#chapter {
+  position: fixed; z-index: 9; left: 50%; top: 20%;
+  transform: translateX(-50%) translateY(-6px);
+  max-width: min(90vw, 520px); text-align: center;
+  pointer-events: none;
+  background: var(--hud-bg); color: var(--hud-ink);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-radius: 18px; padding: 14px 22px;
+  box-shadow: 0 6px 26px rgba(0,0,0,0.35);
+  opacity: 0; transition: opacity 0.7s ease, transform 0.7s ease;
+}
+#chapter.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#chapter-kicker {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; opacity: 0.65;
+}
+#chapter-name {
+  font-size: clamp(1.6rem, 5.5vw, 2.5rem); font-weight: 800; line-height: 1.06;
+  text-transform: capitalize; margin-top: 4px; color: #fdf3da;
+}
+#chapter-desc {
+  margin-top: 7px; font-size: 0.92rem; font-weight: 600; line-height: 1.4; opacity: 0.85;
+}
+
 /* ── event markers ───────────────────────────────────────────────── */
 .evt { pointer-events: auto; cursor: pointer; opacity: 0; transition: opacity 0.45s ease; }
 .evt.show { opacity: 1; }
@@ -85,17 +110,43 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.35);
 }
 .evt-label {
-  margin-top: 5px; padding: 4px 9px; border-radius: 10px;
+  position: relative; margin-top: 7px;
+  padding: 4px 9px; border-radius: 10px;
   background: var(--card-bg); color: var(--ink);
-  font-size: 0.72rem; font-weight: 700; white-space: nowrap;
-  max-width: 46vw; overflow: hidden; text-overflow: ellipsis;
+  max-width: 46vw;
   box-shadow: 0 2px 10px rgba(0,0,0,0.22);
   border-top: 2.5px solid var(--evt-c, var(--accent));
 }
-.evt-label { position: relative; margin-top: 7px; }
-.evt-left .evt-label { transform: translateX(calc(-50% - 16px)) translateY(-26px); }
-.evt-right .evt-label { transform: translateX(calc(50% + 16px)) translateY(-26px); }
+.evt-title {
+  display: block; font-size: 0.72rem; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.evt-when {
+  display: block; margin-top: 1px; font-size: 0.6rem; font-weight: 600;
+  color: var(--ink-soft); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.evt-left .evt-label { transform: translateX(calc(-50% - 16px)) translateY(-30px); }
+.evt-right .evt-label { transform: translateX(calc(50% + 16px)) translateY(-30px); }
 .evt.mini .evt-label { display: none; }
+
+/* ── monument captions (3D landmark labels) ──────────────────────── */
+.mon-label {
+  pointer-events: none;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 12px; border-radius: 12px;
+  background: var(--card-bg); color: var(--ink);
+  text-align: center; white-space: nowrap;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.28);
+  border-top: 3px solid var(--accent);
+  opacity: 0; transform: translateY(-4px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.mon-label.show { opacity: 1; transform: translateY(0); }
+.mon-title { font-size: 0.82rem; font-weight: 800; letter-spacing: -0.01em; }
+.mon-when {
+  margin-top: 1px; font-size: 0.64rem; font-weight: 600;
+  color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
 
 /* ── event card ──────────────────────────────────────────────────── */
 #card {
@@ -274,5 +325,6 @@ body {
 
 @media (min-width: 700px) {
   #hud-time { font-size: 1.35rem; }
-  .evt-label { font-size: 0.78rem; max-width: 260px; }
+  .evt-label { max-width: 260px; }
+  .evt-title { font-size: 0.78rem; }
 }

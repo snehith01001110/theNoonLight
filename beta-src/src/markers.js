@@ -6,14 +6,19 @@
 // nearest to the current scroll position.
 
 import maplibregl from 'maplibre-gl';
-import { EVENTS, CATS } from './data/events.js';
-import { scrollFromYa, distFromYa } from './journey.js';
+import { EVENTS } from './data/events.js';
+import { scrollFromYa, distFromYa, STREET_DRIVE_YA } from './journey.js';
 import { formatWhen, formatDistance } from './format.js';
 
-const MAX_VISIBLE = 12;
+// every event is one warm amber bead on the line — no category colors
+const PIN_COLOR = '#df9a52';
+const MAX_VISIBLE = 7;         // how many pins live in the pool at once
+const LABELED = 3;             // only the few nearest carry a text label
 const WINDOW = 0.035;          // scroll-space half-window for candidates
-const STREET_YA = 12000;       // the "all of history on your street" zone
-const SLOT_PX = 46;            // on-screen spacing between queued plaques
+// the "near field" — matches the camera's visual-odometer drive, so every
+// event the camera drives through streams past as a queued plaque
+const STREET_YA = STREET_DRIVE_YA;
+const SLOT_PX = 78;            // on-screen spacing between queued plaques
 
 export function makeEventLayer(map, journey, { onSelect } = {}) {
   // annotate + place every event once the origin is known. Everything sits
@@ -24,12 +29,13 @@ export function makeEventLayer(map, journey, { onSelect } = {}) {
     const d = distFromYa(ev.ya);
     const s = scrollFromYa(ev.ya);
     const [lng, lat] = journey.point(d);
-    return { ...ev, i, d, s, lng, lat, color: `rgb(${CATS[ev.c].rgb.join(',')})` };
+    return { ...ev, i, d, s, lng, lat, color: PIN_COLOR };
   }).sort((a, b) => a.s - b.s);
   const S = placed.map((p) => p.s);
   const idx = new Map(placed.map((p, k) => [p.i, k]));
 
   const pool = new Map();      // event index -> maplibregl.Marker
+  let landmarks = new Set();   // event indices that also carry a 3D monument
 
   function makeMarker(p) {
     const el = document.createElement('div');
@@ -37,10 +43,14 @@ export function makeEventLayer(map, journey, { onSelect } = {}) {
     // queue never stack on each other
     el.className = 'evt ' + (p.i % 2 ? 'evt-right' : 'evt-left');
     el.style.setProperty('--evt-c', p.color);
+    // title + when, so every labelled event says both what and *when* it is
     el.innerHTML = `
       <div class="evt-inner">
         <div class="evt-pin" style="background:${p.color}"></div>
-        <div class="evt-label">${p.title}</div>
+        <div class="evt-label">
+          <span class="evt-title">${p.title}</span>
+          <span class="evt-when">${formatWhen(p.ya)}</span>
+        </div>
       </div>`;
     el.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -84,15 +94,18 @@ export function makeEventLayer(map, journey, { onSelect } = {}) {
       // dense stretches of history don't become a wall of plaques
       cand.slice(0, MAX_VISIBLE).forEach((p, rank) => {
         if (!pool.has(p.i)) pool.set(p.i, makeMarker(p));
-        pool.get(p.i).getElement().classList.toggle('mini', rank >= 6);
+        // landmark events carry their own richer monument label — keep the
+        // plain pin here so the two don't stack
+        pool.get(p.i).getElement().classList.toggle('mini', rank >= LABELED || landmarks.has(p.i));
       });
     }
 
-    // street-zone conveyor: the whole of recorded history is truly within
-    // ~30 m of the start, which would stack every plaque on one doorstep.
-    // Instead the visible plaques queue up ON the line at fixed on-screen
-    // intervals, in time order, and glide past as you scroll. Order and the
-    // line itself stay true; the card still reports the honest distance.
+    // near-field conveyor: the near field is only a few hundred metres of true
+    // distance, which would stack every plaque on one doorstep. Instead the
+    // visible plaques queue up ON the line at fixed on-screen intervals, in
+    // time order, anchored to the camera's odometer position (dNowKm) so they
+    // stream past as the camera drives forward. Order and the line itself stay
+    // true; the card still reports the honest distance.
     const recent = [];
     for (const [i, mk] of pool) {
       const p = placed[idx.get(i)];
@@ -122,7 +135,7 @@ export function makeEventLayer(map, journey, { onSelect } = {}) {
     };
   }
 
-  return { placed, update, describe };
+  return { placed, update, describe, setLandmarks(ids) { landmarks = ids; } };
 }
 
 // the path itself, drawn as a soft dotted line around the world

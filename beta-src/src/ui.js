@@ -30,7 +30,7 @@ export function setupIntro(map, onStart) {
     let settled = false;
     const watchdog = setTimeout(() => {
       if (!settled) { settled = true; ipFallback('Location timed out'); }
-    }, 12000);
+    }, 15000);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         if (settled) return;
@@ -42,7 +42,7 @@ export function setupIntro(map, onStart) {
         settled = true; clearTimeout(watchdog);
         ipFallback('Location denied');
       },
-      { enableHighAccuracy: false, timeout: 9000, maximumAge: 600000 }
+      { enableHighAccuracy: true, timeout: 13000, maximumAge: 60000 }
     );
   });
 
@@ -136,7 +136,8 @@ export function makeHud() {
 
 // ── contextual captions ──────────────────────────────────────────────
 const CAPTIONS = [
-  { ya: [55, 95], text: 'Your whole lifetime so far: about 23 cm of this sidewalk.' },
+  { ya: [1, 40], text: 'At true scale, one year is 2.9 mm — this whole room is about two thousand years of history.' },
+  { ya: [55, 95], text: 'Your whole lifetime so far: about 23 cm of this floor.' },
   { ya: [3800, 8000], text: 'All recorded history fits in the first fifteen meters from your door.' },
   { ya: [55e6, 82e6], text: 'The dinosaurs died out about 190 km from here.' },
   { ya: [4.4e9, 4.75e9], text: 'Beyond this point, Earth itself hasn’t formed yet. The road continues anyway.' },
@@ -165,6 +166,42 @@ export function makeCaptions() {
     el.hidden = false;
     el.textContent = ranges[hit].text;
     el.classList.add('show');
+  };
+}
+
+// ── chapter / era transitions ─────────────────────────────────────────
+// A short, plain-language line about each chapter, shown once as you cross
+// into it, so the journey reads as a story with named acts.
+const ERA_BLURB = {
+  'civilization': 'Cities, writing, empires — all of it in the last few meters.',
+  'the human story': 'Our ancestors spread out, shaped tools, and learned to speak.',
+  'age of mammals': 'After the dinosaurs, warm-blooded life inherits the Earth.',
+  'age of dinosaurs': 'Giants rule the land for over 150 million years.',
+  'first animals': 'The first complex creatures stir in the ancient seas.',
+  'complex cells': 'Life is still microscopic — but cells grow a nucleus.',
+  'first life': 'The earliest living things appear on a young planet.',
+  'the Sun & Earth form': 'A cloud of dust collapses into our Sun and its worlds.',
+  'the age of galaxies': 'Galaxies light up across a fast-expanding cosmos.',
+  'first stars': 'The very first stars ignite in the cosmic dark.',
+  'the big bang': 'The beginning of space, time, and everything. You are home.',
+};
+
+export function makeChapters() {
+  const el = $('chapter'), name = $('chapter-name'), desc = $('chapter-desc');
+  let current = null, timer = null;
+  return (ya) => {
+    const era = eraOf(ya);
+    if (current === null) { current = era; return; }   // no banner for the starting chapter
+    if (era === current) return;
+    current = era;
+    name.textContent = era;
+    desc.textContent = ERA_BLURB[era] || '';
+    el.hidden = false;
+    // reflow so re-entering the same chapter still animates
+    void el.offsetWidth;
+    el.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(() => el.classList.remove('show'), 3400);
   };
 }
 
