@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d16" />
+  <title>The Noonlight — It All Started Right Here</title>
+  <meta name="description" content="Scroll back through 13.8 billion years, mapped at true scale onto one trip around the Earth — starting and ending at your front door." />
+  <link rel="icon" href="/favicon.ico" />
+  <script type="module" crossorigin src="/beta/assets/index-DblQ0inV.js"></script>
+  <link rel="stylesheet" crossorigin href="/beta/assets/index-DPWHq7dX.css">
+</head>
+<body>
+  <div id="app">
+    <div id="map"></div>
+    <canvas id="fx"></canvas>
+    <div id="tint"></div>
+
+    <!-- HUD -->
+    <header id="hud" hidden>
+      <div class="hud-left">
+        <div id="hud-time">now</div>
+        <div id="hud-era"></div>
+        <div id="hud-dist">0 mm travelled</div>
+      </div>
+      <div class="hud-right">
+        <svg id="ring" viewBox="0 0 44 44" aria-label="journey progress">
+          <circle class="ring-bg" cx="22" cy="22" r="19"/>
+          <circle id="ring-fg" cx="22" cy="22" r="19"/>
+          <circle class="ring-dot" id="ring-dot" cx="22" cy="3" r="2.6"/>
+        </svg>
+      </div>
+    </header>
+
+    <!-- contextual microcopy -->
+    <div id="caption" hidden></div>
+
+    <!-- event card -->
+    <aside id="card" hidden>
+      <button id="card-close" aria-label="close">×</button>
+      <div id="card-when"></div>
+      <h3 id="card-title"></h3>
+      <p id="card-desc"></p>
+      <div id="card-where"></div>
+    </aside>
+
+    <!-- scrubber -->
+    <div id="scrub-wrap" hidden>
+      <input id="scrub" type="range" min="0" max="100000" value="0" step="1" aria-label="timeline scrubber" />
+    </div>
+
+    <!-- step-through controls (reduced motion) -->
+    <div id="steps" hidden>
+      <button id="step-prev">‹ previous</button>
+      <div id="step-label"></div>
+      <button id="step-next">next ›</button>
+    </div>
+
+    <!-- intro -->
+    <section id="intro">
+      <div class="intro-inner">
+        <h1>It all started<br/>right here.</h1>
+        <p class="lede">
+          Scroll back through 13.8 billion years, laid onto one full trip around
+          planet Earth at <em>true scale</em> — about 2.9&nbsp;mm per year. Your lifetime
+          is 23&nbsp;cm of sidewalk. All recorded history fits in the first fifteen
+          meters from your door. Keep going, all the way around the world, and you
+          arrive back home — at the Big Bang.
+        </p>
+        <p class="loc-why" id="loc-why">
+          The journey starts at <strong>your</strong> location — that's the whole point.
+          We only use your approximate position, only in your browser; nothing is stored or sent anywhere.
+        </p>
+        <div class="intro-actions">
+          <button id="btn-geo" class="primary">Start from my location</button>
+          <button id="btn-pick">Pick a point on the globe</button>
+          <form id="geo-search" autocomplete="off">
+            <input id="search-input" type="search" placeholder="…or search a city" aria-label="search a city" />
+            <button type="submit">Go</button>
+          </form>
+          <div id="search-results"></div>
+          <div id="loc-status"></div>
+        </div>
+        <p class="fine">Map data © OpenStreetMap contributors · tiles by OpenFreeMap · geocoding by Nominatim</p>
+      </div>
+    </section>
+
+    <!-- finale -->
+    <section id="finale" hidden>
+      <div id="finale-flash"></div>
+      <div id="finale-copy" hidden>
+        <h2>13.8 billion years ago,<br/>it all began right here.</h2>
+        <div id="finale-stats"></div>
+        <div class="finale-actions">
+          <button id="btn-share" class="primary">Save the postcard</button>
+          <button id="btn-again">Travel again</button>
+        </div>
+        <canvas id="share-canvas" width="1080" height="1350" hidden></canvas>
+      </div>
+    </section>
+
+    <div id="nogl" hidden>
+      <div>
+        <h2>This journey needs WebGL2</h2>
+        <p>Your browser or device can't render the 3D globe. Try a recent version of
+        Safari, Chrome, or Firefox — or visit <a href="/">the original timeline</a> instead.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
