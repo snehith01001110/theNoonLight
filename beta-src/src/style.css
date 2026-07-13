@@ -92,8 +92,10 @@ body {
   box-shadow: 0 2px 10px rgba(0,0,0,0.22);
   border-top: 2.5px solid var(--evt-c, var(--accent));
 }
-.evt-stem { width: 2px; height: 14px; background: rgba(255,255,255,0.65); border-radius: 1px; }
-.evt.mini .evt-label, .evt.mini .evt-stem { display: none; }
+.evt-label { position: relative; margin-top: 7px; }
+.evt-left .evt-label { transform: translateX(calc(-50% - 16px)) translateY(-26px); }
+.evt-right .evt-label { transform: translateX(calc(50% + 16px)) translateY(-26px); }
+.evt.mini .evt-label { display: none; }
 
 /* ── event card ──────────────────────────────────────────────────── */
 #card {

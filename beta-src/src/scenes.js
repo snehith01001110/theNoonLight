@@ -107,19 +107,10 @@ function mSun() {
   g.add(core);
   return g;
 }
-function mPyramid() {
-  const g = new THREE.Group();
-  const p = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.9, 4), FLAT(0xe3cf9e));
-  p.position.y = 0.45; p.rotation.y = Math.PI / 4;
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.2, 4), FLAT(0xf3d9a8, 0xf3d9a8, 0.6));
-  tip.position.y = 1.0; tip.rotation.y = Math.PI / 4;
-  g.add(p, tip);
-  return g;
-}
-
-// which deep-time events get bespoke set pieces (matched by title)
+// which deep-time events get bespoke set pieces (matched by title).
+// Nothing within the last 12k years: the user's real streets stay real —
+// no fabricated structures next to their house.
 const SPECIALS = [
-  ['The Great Pyramid', mPyramid], ['Göbekli Tepe', mPyramid],
   ['Chicxulub asteroid impact', mAsteroid], ['The dinosaurs die', mDino],
   ['First dinosaurs', mDino], ['Argentinosaurus, largest dinosaur', mDino],
   ['First trilobites', mTrilobite],
@@ -143,7 +134,7 @@ export function makeMonumentLayer(map, placedEvents) {
   }
   let lastS = -1;
   for (const ev of placedEvents) {
-    if (ev.ya < 12000 || used.has(ev.i)) continue;
+    if (ev.ya < 1e5 || used.has(ev.i)) continue;   // none near the user's streets
     if (ev.s - lastS < 0.012) continue;          // keep them spaced in scroll
     lastS = ev.s;
     items.push({ ev, builder: () => mObelisk() });
@@ -151,7 +142,7 @@ export function makeMonumentLayer(map, placedEvents) {
   // ground monuments only work while the ground is a stage — at orbital
   // zooms, and for anything before Earth existed, sky effects take over
   const keep = items.filter(({ ev }) =>
-    ev.ya < 12000 || (ev.ya < 4.55e9 && zoomFromScroll(ev.s) >= 4.5));
+    ev.ya >= 12000 && ev.ya < 4.55e9 && zoomFromScroll(ev.s) >= 4.5);
   items.length = 0;
   items.push(...keep);
 
@@ -168,12 +159,9 @@ export function makeMonumentLayer(map, placedEvents) {
     const group = it.builder();
     // scale so the piece reads ~80 px tall at the zoom it's met at, but
     // never taller than ~a third of its distance from the start — pieces
-    // near the doorstep must stay street furniture, not skyscrapers.
-    // Street-zone pieces (last 12k years) are simply human-scale.
+    // near the doorstep must stay street furniture, not skyscrapers
     const z = zoomFromScroll(it.ev.s);
-    const scale = it.ev.ya < 12000
-      ? 8
-      : Math.min(80 * METERS_PER_PX(z, it.ev.lat), Math.max(5, it.ev.d * 1000 * 0.35));
+    const scale = Math.min(80 * METERS_PER_PX(z, it.ev.lat), Math.max(5, it.ev.d * 1000 * 0.35));
     group.scale.setScalar(scale);
     scene.add(group);
     return { scene, group };

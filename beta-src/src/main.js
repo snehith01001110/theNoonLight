@@ -127,7 +127,7 @@ function frame(now) {
 
     hud.update(s, ya);
     captions(s);
-    events.update(s);
+    events.update(s, d, zoom);
     monuments?.setScroll(s);
     if (monuments?.hasNearby(s)) map.triggerRepaint();
   }
