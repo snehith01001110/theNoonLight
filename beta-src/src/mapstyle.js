@@ -117,7 +117,11 @@ export function restyle(style) {
       if (l.type === 'fill-extrusion') {
         hasExtrusion = true;
         l.paint['fill-extrusion-color'] = '#e9dfcb';
-        l.paint['fill-extrusion-opacity'] = 0.95;
+        l.paint['fill-extrusion-opacity'] = 0.5;
+        // soft diorama bumps: cap the height so real skyscrapers can't loom
+        // over the doorstep, and ground them all at zero
+        l.paint['fill-extrusion-height'] = ['min', 15, ['coalesce', ['get', 'render_height'], 6]];
+        l.paint['fill-extrusion-base'] = 0;
       } else if (l.type === 'fill') {
         // flat footprints only at mid zoom; extrusions take over close-up
         l.maxzoom = Math.min(l.maxzoom || 24, 15.5);
@@ -144,15 +148,13 @@ export function restyle(style) {
       paint: {
         'fill-extrusion-color': [
           'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 4],
-          0, '#efe6d3', 60, '#ddd1b8', 200, '#ccbc9f',
+          0, '#efe6d3', 8, '#e4d8bf', 15, '#d8ccae',
         ],
-        // only trust real height data; footprints without it stay low so
-        // houses read as houses, not invented office blocks
-        'fill-extrusion-height': [
-          'case', ['has', 'render_height'], ['get', 'render_height'], 4,
-        ],
-        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-        'fill-extrusion-opacity': 0.85,
+        // soft diorama bumps: cap the height so tall buildings can't loom, and
+        // ground everything at zero — houses read as houses, not office blocks
+        'fill-extrusion-height': ['min', 15, ['coalesce', ['get', 'render_height'], 4]],
+        'fill-extrusion-base': 0,
+        'fill-extrusion-opacity': 0.5,
       },
     });
   }

@@ -5,14 +5,14 @@ import './style.css';
 
 import { ERAS } from './data/events.js';
 import {
-  makeJourney, yaFromScroll, scrollFromYa, distFromYa,
+  makeJourney, yaFromScroll, scrollFromYa, camDistFromScroll,
   zoomFromScroll, pitchFromZoom, lerpAngle,
 } from './journey.js';
 import { loadStyle } from './mapstyle.js';
 import { makeScroll } from './scroll.js';
 import { makeEventLayer, addPathLayer } from './markers.js';
 import { makeSky } from './sky.js';
-import { setupIntro, makeHud, makeCaptions, makeCard, makeFinale, setupStepMode } from './ui.js';
+import { setupIntro, makeHud, makeCaptions, makeChapters, makeCard, makeFinale, setupStepMode } from './ui.js';
 
 // ── capability gate ──────────────────────────────────────────────────
 const glProbe = document.createElement('canvas').getContext('webgl2');
@@ -34,6 +34,7 @@ const map = new maplibregl.Map({
   pitch: 0,
   bearing: 0,
   maxPitch: 60,
+  maxZoom: 25.2,                 // deep enough to stand among furniture at true scale
   attributionControl: { compact: true },
   fadeDuration: 120,
   // scrolling drives the camera — the map itself is not directly draggable
@@ -41,6 +42,27 @@ const map = new maplibregl.Map({
 });
 for (const h of ['scrollZoom', 'dragPan', 'dragRotate', 'keyboard', 'doubleClickZoom', 'touchZoomRotate', 'touchPitch', 'boxZoom']) {
   map[h]?.disable?.();
+}
+
+// Fade the map's own buildings out at room zoom so the opening furniture isn't
+// pierced by the real (blurry) extrusions. 1 = normal, 0 = inside the room.
+let bldgLayers = null, lastBldgVis = -1;
+function fadeBuildings(zoom) {
+  if (bldgLayers === null) {
+    bldgLayers = map.getStyle().layers
+      .filter((l) => l['source-layer'] === 'building')
+      .map((l) => ({
+        id: l.id,
+        prop: l.type === 'fill-extrusion' ? 'fill-extrusion-opacity' : 'fill-opacity',
+        base: l.type === 'fill-extrusion' ? 0.5 : 1,
+      }));
+  }
+  const vis = 1 - Math.min(1, Math.max(0, (zoom - 20.5) / 2));
+  if (Math.abs(vis - lastBldgVis) < 0.02) return;
+  lastBldgVis = vis;
+  for (const b of bldgLayers) {
+    try { map.setPaintProperty(b.id, b.prop, b.base * vis); } catch { /* layer gone */ }
+  }
 }
 
 // ── shared state ─────────────────────────────────────────────────────
@@ -55,6 +77,7 @@ let lastApplied = { s: -1, bearing: -1 };
 const hud = makeHud();
 const card = makeCard();
 const captions = makeCaptions();
+const chapters = makeChapters();
 const sky = makeSky(document.getElementById('fx'));
 const tintEl = document.getElementById('tint');
 
@@ -77,8 +100,9 @@ map.once('load', () => {
     });
     // Three.js set pieces load lazily so the intro stays light
     import('./scenes.js').then(({ makeMonumentLayer }) => {
-      monuments = makeMonumentLayer(map, events.placed);
+      monuments = makeMonumentLayer(map, events.placed, journey);
       map.addLayer(monuments.layer);
+      events.setLandmarks(monuments.eventIds);   // monuments own their own labels
     });
 
     hud.show();
@@ -108,7 +132,9 @@ function frame(now) {
 
   const s = scroll.tick(dt);
   const ya = yaFromScroll(s);
-  const d = distFromYa(ya);
+  // camera odometer: drives forward through the near field so the map moves,
+  // strict true-scale in deep time. The HUD reports true distance from `ya`.
+  const d = camDistFromScroll(s);
 
   // camera
   const heading = journey.headingAt(d);
@@ -125,8 +151,10 @@ function frame(now) {
     });
     lastApplied = { s, bearing };
 
+    fadeBuildings(zoom);
     hud.update(s, ya);
     captions(s);
+    chapters(ya);
     events.update(s, d, zoom);
     monuments?.setScroll(s);
     if (monuments?.hasNearby(s)) map.triggerRepaint();
