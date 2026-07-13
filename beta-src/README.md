@@ -41,9 +41,12 @@ Network requests are limited to: OpenFreeMap tiles/style/glyphs,
   finale.
 - `src/scroll.js` — virtual scroll: wheel, touch drag + fling, arrow keys,
   and a scrubber all drive a target position with spring easing.
-- `src/markers.js` — all events placed at their true-scale positions;
-  a pooled window of DOM markers tracks the current scroll position;
-  recent events scatter as plaques around the visitor's streets.
+- `src/markers.js` — all events placed ON the path at their true-scale
+  positions; a pooled window of DOM markers tracks the current scroll
+  position. Recent events (which truly all sit within ~30 m of the start)
+  are displayed as a queue of plaques strung along the line at fixed
+  on-screen intervals, gliding past as you scroll — order and the line stay
+  true, and each card reports the honest distance.
 - `src/sky.js` — starfield, deep-time tint, celestial set pieces (Sun
   ignition, first galaxies, cosmic dawn, CMB) drawn on a 2D canvas, plus one
   comet. `src/scenes.js` — ground monuments (pyramid, dinosaurs, asteroid,

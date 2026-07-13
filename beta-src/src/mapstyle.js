@@ -143,12 +143,16 @@ export function restyle(style) {
       minzoom: 15,
       paint: {
         'fill-extrusion-color': [
-          'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 6],
-          0, '#eee4d0', 60, '#dccfb4', 200, '#cbbb9d',
+          'interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 4],
+          0, '#efe6d3', 60, '#ddd1b8', 200, '#ccbc9f',
         ],
-        'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 6],
+        // only trust real height data; footprints without it stay low so
+        // houses read as houses, not invented office blocks
+        'fill-extrusion-height': [
+          'case', ['has', 'render_height'], ['get', 'render_height'], 4,
+        ],
         'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
-        'fill-extrusion-opacity': 0.92,
+        'fill-extrusion-opacity': 0.85,
       },
     });
   }
