@@ -85,6 +85,8 @@
         overflow-x:auto;
         -webkit-overflow-scrolling:touch;
         scrollbar-width:none;
+        /* in flow, nothing scrolls beneath it — skip the costly blur */
+        -webkit-backdrop-filter:none; backdrop-filter:none;
       }
       .legend::-webkit-scrollbar{ display:none; }
       .lchip{ flex:0 0 auto; padding:7px 2px; font-size:0.7rem; }
@@ -140,6 +142,9 @@
        content, so they can't extend scrollHeight or fight the scroll gearing */
     /* extends 36px up into the top margin so the big-bang pill can sit above row 0 */
     .gridnotes{ position:absolute; top:-36px; left:0; right:0; bottom:0; z-index:3; pointer-events:none; overflow:hidden; }
+    /* era lines ride one translated layer, so scrolling moves them all with a
+       single composited transform instead of relayouting each one per frame */
+    .notelayer{ position:absolute; inset:0; will-change:transform; }
     /* the big-bang pill (above its square) and the today pill (below its square) */
     .gtag{
       position:absolute; display:flex; align-items:flex-start;
@@ -159,6 +164,7 @@
       flex:0 0 auto;
       padding:8px 16px calc(12px + env(safe-area-inset-bottom));
       display:flex; flex-direction:column; gap:9px;
+      contain:layout;      /* odometer text updates never relayout the page */
     }
     .meta{
       display:flex; align-items:center; justify-content:space-between; gap:10px 16px;
@@ -250,9 +256,10 @@
       overflow:visible;
     }
     .seg{
-      position:absolute; top:-3px; bottom:-3px;
+      position:absolute; top:-3px; bottom:-3px; left:0;
       background: var(--text); border-radius:3px;
       min-width:10px;
+      will-change:transform;                /* moved by translateX, never layout */
       transition: box-shadow .15s ease;
     }
     @media (hover:hover){ .barrow:hover .seg{ box-shadow: 0 0 6px rgba(240,240,240,0.35); } }
@@ -1963,6 +1970,9 @@
     let cursorGi = null;                 // keyboard cursor block, null until first arrow
     let lastGi = null;                   // last-opened block, for flash-on-close
     let gridPad = 0;                     // vertical offset when grid is centred (fits screen)
+    // stage size, cached so the per-frame render path never reads layout
+    // (clientWidth/Height between style writes force synchronous reflow)
+    let stageW = 0, stageH = 0;
     const active = new Set(CAT_ORDER);   // categories currently shown; all on by default
 
     const rgba = (c, a) => `rgba(${CATS[c].rgb[0]},${CATS[c].rgb[1]},${CATS[c].rgb[2]},${a})`;
@@ -2187,6 +2197,8 @@
       unitIdx = idx;
       cursorGi = null;                    // block indices change with zoom
       const W = scroller.clientWidth, H = scroller.clientHeight;
+      stageW = W; stageH = H;
+      barW = bar.clientWidth;
       blocks = Math.ceil(AGE / unit());
       // squares are one size at every zoom; the +/− stepper scales them, and
       // shrinking stops once everything at this zoom fits without scrolling
@@ -2229,6 +2241,8 @@
         for (let k = 0; k < pool.length; k++){
           const d = document.createElement('div');
           d.className = 'cell';
+          d._cls = 'cell';
+          d.dataset.k = k;          // fixed pool slot; block index = firstRow*cols + k
           pool[k] = d;
           frag.appendChild(d);
         }
@@ -2251,7 +2265,7 @@
     // gearing. The big bang itself (ERAS[0]) is marked by the start tag.
     let eraEls = [];
     function buildEraLabels(){
-      gridnotes.querySelectorAll('.era').forEach(el => el.remove());
+      noteLayer.innerHTML = '';
       eraEls = [];
       const u = unit();
       const frag = document.createDocumentFragment();
@@ -2261,11 +2275,13 @@
         el.className = 'era';
         el._ry = row * rowH;              // real grid Y of the milestone
         el._ya = ya;
+        // fixed position within the translated layer — set once per rebuild
+        el.style.top = (NOTE_OFF + gridPad + el._ry) + 'px';
         el.innerHTML = `<span>${esc(label)}</span>`;
         frag.appendChild(el);
         eraEls.push(el);
       }
-      gridnotes.appendChild(frag);
+      noteLayer.appendChild(frag);
     }
 
     // ── enable/disable steppers at their limits ──
@@ -2302,7 +2318,7 @@
     function drawMosaic(){
       const pitch = cellPx + gap;
       const dpr = window.devicePixelRatio || 1;
-      const H = scroller.clientHeight;
+      const H = stageH;
       const rt = realTop();
       const r0 = Math.max(0, Math.floor(rt / rowH) - MOS_OVER);
       const rN = Math.min(totalRows, Math.ceil((rt + H) / rowH) + MOS_OVER);
@@ -2410,8 +2426,10 @@
       }
       return res;
     }
-    function hideTip(){ tip.style.display = 'none'; }
+    let tipShown = false;
+    function hideTip(){ if (tipShown){ tipShown = false; tip.style.display = 'none'; } }
     function showTip(gi, cx, cy){
+      tipShown = true;
       const n = blockCounts.get(gi) || 0;
       const when = agoShort(AGE - gi * unit());
       let html;
@@ -2446,7 +2464,7 @@
           else {
             const el = document.elementFromPoint(cx, cy);
             const cell = el && el.closest ? el.closest('.cell') : null;
-            if (cell && cell.dataset.gi !== undefined) gi = +cell.dataset.gi;
+            if (cell && cell.dataset.k !== undefined) gi = firstRow * cols + +cell.dataset.k;
           }
           if (gi == null || gi >= blocks){ hideTip(); return; }
           showTip(gi, cx, cy);
@@ -2460,32 +2478,42 @@
     // ── paint the visible pool ─────────────────────────────────
     // each block is tinted with its dominant category's accent colour;
     // brightness scales with event density (log) so it never blows out.
+    // Each cell caches what it last painted (el._bg / el._cls) and is only
+    // touched when its content actually changes. While scrolling, most cells
+    // shift from one empty block to another identical empty block, so a row
+    // step costs a handful of DOM writes instead of thousands — the
+    // difference between janky and smooth scrolling on phones.
     function paintPool(){
       if (mosaicOn){ drawMosaic(); return; }
       const base = firstRow * cols;
       const flashing = performance.now() < flashUntil;
       const filtered = active.size < CAT_ORDER.length;   // a real subset is selected
+      // no matching events: fainter when a filter is narrowing the view
+      const emptyBg = `rgba(240,240,240,${filtered ? 0.02 : 0.04})`;
       for (let k = 0; k < pool.length; k++){
         const gi = base + k, el = pool[k];
-        el.dataset.gi = gi;
-        if (gi >= blocks){ el.className = 'cell future'; el.style.background = ''; continue; }
-        const n = blockCounts.get(gi) || 0;
-        if (n === 0){
-          // no matching events: fainter when a filter is narrowing the view
-          el.style.background = `rgba(240,240,240,${filtered ? 0.02 : 0.04})`;
+        let bg, cls;
+        if (gi >= blocks){
+          cls = 'cell future'; bg = '';
         } else {
-          const a = 0.30 + 0.55 * (Math.log1p(n) / Math.log1p(maxBlockCount));
-          el.style.background = blockBg(gi, a);
+          const n = blockCounts.get(gi) || 0;
+          if (n === 0){
+            bg = emptyBg;
+          } else {
+            const a = 0.30 + 0.55 * (Math.log1p(n) / Math.log1p(maxBlockCount));
+            bg = blockBg(gi, a);
+          }
+          cls = 'cell';
+          if (gi === 0) cls += ' origin';
+          if (gi === nowBlock) cls += ' now';
+          if (gi === cursorGi) cls += ' cursor';
+          if (flashing){
+            const t = gi * unit();
+            if (t >= flashT0 && t < flashT1) cls += ' flash';
+          }
         }
-        let cls = 'cell';
-        if (gi === 0) cls += ' origin';
-        if (gi === nowBlock) cls += ' now';
-        if (gi === cursorGi) cls += ' cursor';
-        if (flashing){
-          const t = gi * unit();
-          if (t >= flashT0 && t < flashT1) cls += ' flash';
-        }
-        el.className = cls;
+        if (el._bg !== bg){ el._bg = bg; el.style.background = bg; }
+        if (el._cls !== cls){ el._cls = cls; el.className = cls; }
       }
     }
 
@@ -2498,6 +2526,9 @@
     // room to sit above its first-row square.
     const NOTE_OFF = 36;
     const gridnotes = $('gridnotes');
+    const noteLayer = document.createElement('div');
+    noteLayer.className = 'notelayer';
+    gridnotes.appendChild(noteLayer);
     const cellTop = gi => gridPad + Math.floor(gi / cols) * rowH - realTop();
     let tagBB = null, tagNow = null;
     function buildTags(){
@@ -2513,13 +2544,16 @@
       tagNow = mk('down', '<b>today</b> — you are here');
     }
     function placeTag(el, gi, preferUp){
-      const W = scroller.clientWidth, H = scroller.clientHeight, pitch = cellPx + gap;
+      const W = stageW, H = stageH, pitch = cellPx + gap;
       const left0 = Math.max(0, (W - (cols * pitch - gap)) / 2);
       const sqTop = cellTop(gi), sqBot = sqTop + cellPx;
       if (sqBot < -40 || sqTop > H + 40){ el.hidden = true; return; }
       el.hidden = false;
       const pill = el.querySelector('.pill'), line = el.querySelector('i');
-      const pillW = pill.offsetWidth || 170, pillH = pill.offsetHeight || 22;
+      // the pill text never changes, so measure it once (on first show —
+      // hidden elements measure 0) instead of forcing a reflow every frame
+      if (!el._pw){ el._pw = pill.offsetWidth || 170; el._ph = pill.offsetHeight || 22; }
+      const pillW = el._pw, pillH = el._ph;
       const conn = Math.max(6, Math.min(12, Math.round(rowH * 0.45)));   // compact, always fits
       // the big-bang pill sits above its square (it has the top margin to do so,
       // and only flips below if somehow starved). The today pill ALWAYS sits
@@ -2538,19 +2572,20 @@
       line.style.marginLeft = Math.max(2, Math.min(pillW - 3, cx - x)) + 'px';
     }
     function positionNotes(){
-      const H = scroller.clientHeight;
+      const H = stageH, rt = realTop();
+      noteLayer.style.transform = 'translateY(' + (-rt) + 'px)';
       let last = -1e9;
       for (const el of eraEls){
-        const y = gridPad + el._ry - realTop();
-        if (y < 6 || y > H - 6 || y - last < 15){ el.hidden = true; continue; }
-        el.hidden = false; last = y;
-        el.style.top = (NOTE_OFF + y) + 'px';
+        const y = gridPad + el._ry - rt;
+        const hid = y < 6 || y > H - 6 || y - last < 15;
+        if (!hid) last = y;
+        if (el._hid !== hid){ el._hid = hid; el.hidden = hid; }  // write only on change
       }
       if (tagBB) placeTag(tagBB, 0, true);
       if (tagNow) placeTag(tagNow, nowBlock, false);
     }
     function render(){
-      const rt = vtop, H = scroller.clientHeight;
+      const rt = vtop, H = stageH;
       if (mosaicOn){
         // re-slice the canvas when the viewport nears the drawn window's edge
         const vr0 = Math.floor(rt / rowH);
@@ -2571,10 +2606,12 @@
     }
 
     // ── bottom bar = a scrollbar through time ──────────────────
+    let barW = 0, segW = -1;               // cached: bar px width, last thumb width%
     function syncBar(){
-      const w = Math.min(100, scroller.clientHeight / spacerH * 100);
-      seg.style.left = Math.max(0, Math.min(100 - w, realTop() / spacerH * 100)) + "%";
-      seg.style.width = w + "%";
+      const w = Math.min(100, stageH / spacerH * 100);
+      if (w !== segW){ segW = w; seg.style.width = w + "%"; }   // changes on zoom only
+      const f = Math.max(0, Math.min(1 - w / 100, realTop() / spacerH));
+      seg.style.transform = 'translateX(' + (f * barW).toFixed(1) + 'px)';
     }
     function timeAtY(viewY){
       return Math.max(0, ((realTop() + viewY - gridPad) / rowH) * cols * unit());
@@ -2590,13 +2627,15 @@
     // odometer readout: the year counter sweeps toward its target every frame,
     // so scrolling visibly spins through the years in between instead of
     // jumping millions at a time. Runs only while the value is still moving.
-    let yaShown = null, yaTarget = 0, yaRaf = 0;
+    let yaShown = null, yaTarget = 0, yaRaf = 0, yaTick = 0;
     function tickYa(){
       yaRaf = 0;
       const d = yaTarget - yaShown;
       if (Math.abs(d) < 1) yaShown = yaTarget;
       else { yaShown += d * 0.16; yaRaf = requestAnimationFrame(tickYa); }
-      posTime.textContent = " · ≈ " + commas(yaShown) + " years ago";
+      // the DOM write (text relayout) is the pricey half — 30Hz reads the same
+      if (!yaRaf || (yaTick++ & 1) === 0)
+        posTime.textContent = " · ≈ " + commas(yaShown) + " years ago";
     }
     function stopYa(){ if (yaRaf){ cancelAnimationFrame(yaRaf); yaRaf = 0; } }
     // at the very bottom the readout becomes a live clock: 13.787 billion
@@ -2612,7 +2651,7 @@
     function startClock(){ if (!clockTimer){ paintClock(); clockTimer = setInterval(paintClock, 1000); } }
     function stopClock(){ if (clockTimer){ clearInterval(clockTimer); clockTimer = 0; } }
     function syncPos(){
-      const H = scroller.clientHeight;
+      const H = stageH;
       if (vmax <= 4){                            // the whole grid is on screen
         stopYa(); stopClock(); yaShown = null;
         posEra.textContent = "all of time";
@@ -2884,7 +2923,7 @@
     // when the finger didn't scroll, so no gesture juggling is needed
     win.addEventListener('click', (e) => {
       const cell = e.target.closest('.cell');
-      if (cell && cell.dataset.gi !== undefined) select(+cell.dataset.gi);
+      if (cell && cell.dataset.k !== undefined) select(firstRow * cols + +cell.dataset.k);
     });
 
     // capture phase: swallow the ghost click a touch can synthesize right
@@ -3156,6 +3195,8 @@
       clearTimeout(rz);
       rz = setTimeout(() => {
         const w = scroller.clientWidth;
+        stageW = w; stageH = scroller.clientHeight;
+        barW = bar.clientWidth;
         if (w === lastW){ render(); return; }
         lastW = w;
         const mid = scroller.clientHeight / 2;
