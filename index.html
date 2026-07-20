@@ -32,6 +32,7 @@
     }
     *{ box-sizing: border-box; }
     html,body{ height:100%; margin:0; }
+    html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
     body{
       background: var(--bg);
       color: var(--text);
@@ -47,15 +48,16 @@
     }
 
     .app{
+      position:relative;
       height:100vh; height:100dvh;
       display:flex; flex-direction:column;
     }
 
     /* ── colour legend/filter: a blurred pill floating over the grid ── */
     .legend{
-      position:absolute; top:2px; right:0; z-index:5;
+      position:absolute; top:calc(38px + env(safe-area-inset-top)); right:16px; z-index:5;
       display:flex; flex-wrap:wrap; gap:5px 14px; justify-content:flex-end; align-items:center;
-      max-width:calc(100% - 16px);
+      max-width:calc(100% - 32px);
       background:rgba(12,12,12,0.55);
       -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
       border:1px solid var(--border); border-radius:999px;
@@ -64,6 +66,7 @@
     .lchip{
       display:inline-flex; align-items:center; gap:6px;
       background:none; border:none; padding:2px 0; cursor:var(--curact, pointer);
+      touch-action:manipulation;
       font-family:var(--mono); font-size:0.66rem; color:var(--muted); line-height:1;
     }
     .lchip i{ width:8px; height:8px; border-radius:2px; flex:0 0 auto; }
@@ -71,7 +74,21 @@
     .lchip.off i{ box-shadow: inset 0 0 0 1px var(--border); background:transparent !important; }
     @media (hover:hover){ .lchip:hover{ color:var(--text); } }
     .lchip:focus-visible{ outline:2px solid var(--muted); outline-offset:2px; border-radius:4px; }
-    @media (max-width:480px){ .lchip{ font-size:0.62rem; } }
+    /* on phones the legend leaves the overlay and joins the normal flow above
+       the grid — never covering squares — as one swipeable row of chips */
+    @media (max-width:640px){
+      .legend{
+        position:static;
+        margin:calc(8px + env(safe-area-inset-top)) 12px 0;
+        flex-wrap:nowrap; justify-content:flex-start;
+        max-width:none;
+        overflow-x:auto;
+        -webkit-overflow-scrolling:touch;
+        scrollbar-width:none;
+      }
+      .legend::-webkit-scrollbar{ display:none; }
+      .lchip{ flex:0 0 auto; padding:7px 2px; font-size:0.7rem; }
+    }
 
     /* ── the squares: a natively scrollable grid of all of time ── */
     .stage{
@@ -80,6 +97,11 @@
       min-height:0; min-width:0;
       /* top gap so row 0 clears the edge AND the big-bang pill has room above it */
       margin:calc(36px + env(safe-area-inset-top)) 16px 0;
+    }
+    /* phones: the in-flow legend already clears the notch, so the stage only
+       keeps the big-bang-pill gap; slimmer side margins buy grid columns */
+    @media (max-width:640px){
+      .stage{ margin:36px 12px 0; }
     }
     .scroller{
       position:absolute; inset:0;
@@ -191,12 +213,19 @@
       background:var(--surface); color:var(--text);
       border:1px solid var(--border); border-radius:6px;
       padding:5px 10px; cursor:var(--curact, pointer); line-height:1;
+      touch-action:manipulation;
     }
     button.ui:hover{ background:var(--surface2); }
     button.ui:focus-visible{ outline:2px solid var(--muted); outline-offset:2px; }
     button.ui:disabled{ opacity:.32; cursor:var(--cur, default); background:var(--surface); }
     @media (pointer:coarse){
-      button.ui{ padding:8px 12px; }
+      button.ui{ padding:10px; min-width:38px; }
+    }
+    /* phones: the two stepper clusters spread edge to edge, easy thumb reach */
+    @media (max-width:640px){
+      .meta{ gap:8px 10px; }
+      .zoomcluster{ width:100%; justify-content:space-between; gap:6px; }
+      .zoom{ gap:4px; }
     }
 
     /* tiny-square mode: the grid drawn on a canvas — only a slice around the
@@ -210,6 +239,9 @@
       touch-action:none;
       user-select:none; -webkit-user-select:none;
       cursor:var(--curact, grab);
+    }
+    @media (pointer:coarse){
+      .barrow{ padding:14px 0 4px; }        /* fatter grab zone for thumbs */
     }
     .barrow.grabbing{ cursor:var(--curact, grabbing); }
     .bar{
@@ -252,6 +284,7 @@
     .tick{
       position:absolute; top:0; transform:translateX(-50%);
       background:none; border:none; padding:0; margin:0; cursor:var(--curact, pointer);
+      touch-action:manipulation;
       font-family:var(--mono); font-size:0.6rem; color:var(--faint); white-space:nowrap;
       text-decoration:underline; text-decoration-color:rgba(240,240,240,0.20); text-underline-offset:3px;
     }
@@ -318,6 +351,9 @@
       animation: cue 5s ease forwards;
     }
     @keyframes cue{ 0%,58%{ opacity:1; } 100%{ opacity:0; } }
+    @media (max-width:640px){
+      .cue{ white-space:normal; text-align:center; max-width:calc(100% - 24px); border-radius:14px; }
+    }
 
     /* ── overlay modal ── */
     .overlay{
@@ -386,17 +422,32 @@
       .cell.now{ animation:none; box-shadow: inset 0 0 0 1.5px var(--text); }
       .win.tween .cell{ transition:none; }
     }
+    /* phones: the event dialog becomes a bottom sheet — full width, thumb-
+       height actions, safe-area padding, tap the dimmed grid above to close */
     @media (max-width:640px){
-      .overlay{ padding:16px; }
-      .modal{ padding:22px 20px 6px; }
+      .overlay{ padding:16px 0 0; align-items:flex-end; }
+      .modal{
+        width:100%;
+        max-height:88vh; max-height:88dvh;
+        border-radius:16px 16px 0 0;
+        border-left:none; border-right:none; border-bottom:none;
+        padding:22px 20px calc(8px + env(safe-area-inset-bottom));
+        animation: sheet-in .2s ease;
+      }
       .modal-title{ font-size:1.15rem; }
+      .modal .close{ padding:10px; }
+      .modal-actions .ui{ padding:10px 14px; }
+    }
+    @keyframes sheet-in{ from{ opacity:0; transform:translateY(28px); } }
+    @media (prefers-reduced-motion: reduce){
+      .modal{ animation:none; }
     }
   </style>
 </head>
 <body>
   <div class="app">
+    <div class="legend" id="legend" role="group" aria-label="Categories — tap to filter"></div>
     <div class="stage">
-      <div class="legend" id="legend" role="group" aria-label="Categories — tap to filter"></div>
       <div class="scroller" id="scroller" tabindex="0" role="region"
            aria-label="Timeline of the universe, from the Big Bang to today. Scroll to move through time.">
         <div class="spacer" id="spacer">
