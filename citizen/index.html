@@ -89,6 +89,23 @@
     }
     .face.back{ transform: rotateY(180deg); }
 
+    /* star the current card, one button per face so it shows on both sides */
+    .star{
+      appearance: none; border: none; background: none;
+      position: absolute; top: 6px; right: 6px;
+      width: 44px; height: 44px;
+      display: flex; justify-content: center; align-items: center;
+      border-radius: 50%;
+      color: var(--muted);
+      cursor: pointer;
+      z-index: 1;
+    }
+    .star svg{ width: 20px; height: 20px; display: block; }
+    .star.on{ color: var(--accent); }
+    .star.on svg{ fill: currentColor; }
+    @media (hover:hover){ .star:hover{ color: var(--accent); } }
+    .star:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+
     .eyebrow{
       flex: 0 0 auto;
       font-family: var(--mono);
@@ -97,6 +114,7 @@
       text-transform: uppercase;
       color: var(--muted);
       text-align: center;
+      padding: 0 40px;
     }
     .face.back .eyebrow{ color: var(--accent); }
 
@@ -149,7 +167,7 @@
     .controls{
       flex: 0 0 auto;
       display: flex; justify-content: center; align-items: center;
-      gap: 34px;
+      gap: 18px;
       padding-top: 4px;
     }
     .controls button{
@@ -166,16 +184,20 @@
     .controls button:active{ background: var(--edge); }
     .controls button:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    #shuffle{ color: var(--muted); }
-    #shuffle svg{ width: 22px; height: 22px; }
-    #shuffle[aria-pressed="true"]{ color: var(--accent); }
-    #shuffle[aria-pressed="true"]::after{
+    /* mode toggles share the Spotify convention: accent + dot when on */
+    #shuffle, #starOnly, #listBtn{ color: var(--muted); }
+    #shuffle svg, #starOnly svg, #listBtn svg{ width: 22px; height: 22px; }
+    #shuffle[aria-pressed="true"], #starOnly[aria-pressed="true"]{ color: var(--accent); }
+    #starOnly[aria-pressed="true"] svg{ fill: currentColor; }
+    #shuffle[aria-pressed="true"]::after, #starOnly[aria-pressed="true"]::after{
       content: "";
       position: absolute; bottom: 5px; left: 50%;
       width: 4px; height: 4px; margin-left: -2px;
       border-radius: 50%;
       background: var(--accent);
     }
+    #starOnly[aria-disabled="true"]{ opacity: 0.35; cursor: default; }
+    #starOnly[aria-disabled="true"]:hover{ background: none; }
 
     .counter{
       flex: 0 0 auto;
@@ -192,6 +214,88 @@
       display: flex; justify-content: center; align-items: center;
       font-family: var(--mono); font-size: 0.8rem; color: var(--muted);
     }
+
+    /* ── all questions, as a list ── */
+    .list{
+      position: fixed; inset: 0;
+      background: var(--bg);
+      z-index: 10;
+      display: flex; flex-direction: column;
+    }
+    .list[hidden]{ display: none; }
+    .list-inner{
+      width: 100%; max-width: 680px;
+      margin: 0 auto;
+      flex: 1 1 auto; min-height: 0;
+      display: flex; flex-direction: column;
+      padding: 0 20px;
+    }
+    .list-head{
+      flex: 0 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: calc(10px + env(safe-area-inset-top)) 0 6px;
+      font-family: var(--mono); font-size: 0.72rem; color: var(--muted);
+    }
+    .list-head button{
+      appearance: none; border: none; background: none;
+      width: 44px; height: 44px; margin-right: -12px;
+      display: flex; justify-content: center; align-items: center;
+      border-radius: 50%;
+      color: var(--muted); cursor: pointer;
+    }
+    .list-head button svg{ width: 22px; height: 22px; }
+    @media (hover:hover){ .list-head button:hover{ color: var(--text); background: var(--edge); } }
+    .list-head button:focus-visible{ outline: 2px solid var(--accent); outline-offset: 2px; }
+    .list-scroll{
+      flex: 1 1 auto; min-height: 0;
+      overflow-y: auto;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+    .list h2{
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 26px 0 4px;
+    }
+    .list ul{ margin: 0; padding: 0; list-style: none; }
+    .list li{
+      display: flex; align-items: stretch;
+      border-top: 1px solid var(--edge);
+    }
+    .rowq{
+      appearance: none; border: none; background: none;
+      flex: 1 1 auto; min-width: 0;
+      display: flex; align-items: baseline; gap: 12px;
+      padding: 13px 0;
+      color: var(--text);
+      font-family: var(--sans); font-size: 0.92rem; line-height: 1.4;
+      text-align: left;
+      cursor: pointer;
+    }
+    .rowq .num{
+      flex: 0 0 2.2em;
+      font-family: var(--mono); font-size: 0.72rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    li.current .rowq .num{ color: var(--accent); }
+    @media (hover:hover){ .rowq:hover .qt{ color: var(--accent); } }
+    .rowq:focus-visible{ outline: 2px solid var(--accent); outline-offset: -2px; }
+    .rowstar{
+      appearance: none; border: none; background: none;
+      flex: 0 0 44px;
+      display: flex; justify-content: center; align-items: center;
+      color: var(--muted); opacity: 0.6;
+      cursor: pointer;
+    }
+    .rowstar svg{ width: 16px; height: 16px; }
+    .rowstar.on{ color: var(--accent); opacity: 1; }
+    .rowstar.on svg{ fill: currentColor; }
+    @media (hover:hover){ .rowstar:hover{ color: var(--accent); opacity: 1; } }
+    .rowstar:focus-visible{ outline: 2px solid var(--accent); outline-offset: -2px; }
 
     @media (prefers-reduced-motion: reduce){
       .card{ transition: none; }
@@ -211,11 +315,17 @@
       <div class="card" id="card" tabindex="0" role="button"
            aria-label="Flashcard. Press Enter or tap to flip.">
         <div class="face front">
+          <button class="star" aria-label="Star this card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
           <div class="eyebrow" id="category"></div>
           <div class="content"><p class="question" id="question"></p></div>
           <div class="hint">tap to flip</div>
         </div>
         <div class="face back">
+          <button class="star" aria-label="Star this card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
           <div class="eyebrow">Answer</div>
           <div class="content" id="answerContent"></div>
           <div class="hint">tap to flip back</div>
@@ -224,6 +334,9 @@
     </div>
 
     <div class="controls" hidden id="controls">
+      <button id="starOnly" aria-label="Review starred cards only" aria-pressed="false" aria-disabled="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </button>
       <button id="prev" aria-label="Previous card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
@@ -233,8 +346,23 @@
       <button id="next" aria-label="Next card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
+      <button id="listBtn" aria-label="All questions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
     </div>
     <div class="counter" id="counter" hidden></div>
+  </div>
+
+  <div class="list" id="list" hidden role="dialog" aria-label="All questions">
+    <div class="list-inner">
+      <div class="list-head">
+        <span>All 128 questions</span>
+        <button id="listClose" aria-label="Close list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="list-scroll" id="listScroll"></div>
+    </div>
   </div>
 
   <script>
@@ -242,6 +370,8 @@
 
     const STORE_KEY = 'noonlight-citizen-v1';
     const N = 128;
+
+    const STAR_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
     /* small line icons, shown on the answer side of a few cards only */
     const ICON_SVGS = {
@@ -259,7 +389,10 @@
     };
 
     let cards = [];
-    let state = { mode: 'seq', seqIdx: 0, order: null, pos: 0 };
+    let state = {
+      mode: 'seq', seqIdx: 0, order: null, pos: 0,
+      starred: [], starOnly: false, fSeqPos: 0, fOrder: null, fPos: 0
+    };
 
     function loadState(){
       try{
@@ -267,31 +400,65 @@
         if (!s) return;
         if (s.mode === 'seq' || s.mode === 'shuf') state.mode = s.mode;
         if (Number.isInteger(s.seqIdx) && s.seqIdx >= 0 && s.seqIdx < N) state.seqIdx = s.seqIdx;
-        if (Array.isArray(s.order) && s.order.length === N &&
-            new Set(s.order).size === N && s.order.every(i => Number.isInteger(i) && i >= 0 && i < N)){
-          state.order = s.order;
-        }
+        if (isPerm(s.order, N)) state.order = s.order;
         if (Number.isInteger(s.pos) && s.pos >= 0 && s.pos < N) state.pos = s.pos;
+        if (Array.isArray(s.starred)){
+          state.starred = [...new Set(s.starred.filter(id => Number.isInteger(id) && id >= 1 && id <= N))];
+        }
+        state.starOnly = s.starOnly === true;
+        if (Number.isInteger(s.fSeqPos) && s.fSeqPos >= 0) state.fSeqPos = s.fSeqPos;
+        if (Array.isArray(s.fOrder)) state.fOrder = s.fOrder;
+        if (Number.isInteger(s.fPos) && s.fPos >= 0) state.fPos = s.fPos;
       }catch(e){ /* corrupted storage: start fresh */ }
       if (state.mode === 'shuf' && !state.order) state.order = shuffled();
       if (!state.order) state.pos = 0;
+      ensureStarredDeck();
     }
     function saveState(){
       try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
     }
 
-    function shuffled(){
-      const a = Array.from({length: N}, (_, i) => i);
-      for (let i = N - 1; i > 0; i--){
+    function isPerm(a, n){
+      return Array.isArray(a) && a.length === n && new Set(a).size === n &&
+             a.every(i => Number.isInteger(i) && i >= 0 && i < n);
+    }
+    function shuffleArr(a){
+      a = a.slice();
+      for (let i = a.length - 1; i > 0; i--){
         const j = Math.floor(Math.random() * (i + 1));
         [a[i], a[j]] = [a[j], a[i]];
       }
       return a;
     }
+    function shuffled(){ return shuffleArr(Array.from({length: N}, (_, i) => i)); }
 
-    function currentCard(){
-      return state.mode === 'shuf' ? cards[state.order[state.pos]] : cards[state.seqIdx];
+    function starredIndices(){
+      const set = new Set(state.starred);
+      const out = [];
+      for (let i = 0; i < N; i++) if (set.has(i + 1)) out.push(i);
+      return out;
     }
+
+    /* keep the starred-only view consistent with the current starred set */
+    function ensureStarredDeck(){
+      const sIdx = starredIndices();
+      if (!sIdx.length){ state.starOnly = false; state.fOrder = null; state.fSeqPos = 0; state.fPos = 0; return; }
+      if (state.fSeqPos >= sIdx.length) state.fSeqPos = 0;
+      const setS = new Set(sIdx);
+      const okOrder = Array.isArray(state.fOrder) && state.fOrder.length === sIdx.length &&
+                      new Set(state.fOrder).size === sIdx.length && state.fOrder.every(i => setS.has(i));
+      if (!okOrder){ state.fOrder = shuffleArr(sIdx); state.fPos = 0; }
+      if (state.fPos >= state.fOrder.length) state.fPos = 0;
+    }
+
+    function currentIndex(){
+      if (state.starOnly){
+        return state.mode === 'shuf' ? state.fOrder[state.fPos] : starredIndices()[state.fSeqPos];
+      }
+      return state.mode === 'shuf' ? state.order[state.pos] : state.seqIdx;
+    }
+    function currentCard(){ return cards[currentIndex()]; }
+    function isStarred(id){ return state.starred.includes(id); }
 
     const el = id => document.getElementById(id);
 
@@ -326,9 +493,30 @@
       });
       box.appendChild(ul);
 
-      el('counter').textContent = state.mode === 'shuf'
-        ? 'Card ' + c.id
-        : 'Card ' + (state.seqIdx + 1) + ' / ' + N;
+      if (state.starOnly){
+        const L = starredIndices().length;
+        el('counter').textContent = state.mode === 'shuf'
+          ? '★ Card ' + c.id
+          : '★ ' + (state.fSeqPos + 1) + ' / ' + L;
+      } else {
+        el('counter').textContent = state.mode === 'shuf'
+          ? 'Card ' + c.id
+          : 'Card ' + (state.seqIdx + 1) + ' / ' + N;
+      }
+      updateStarUI();
+    }
+
+    function updateStarUI(){
+      const on = isStarred(currentCard().id);
+      document.querySelectorAll('.card .star').forEach(b => {
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-label', on ? 'Unstar this card' : 'Star this card');
+      });
+      const any = state.starred.length > 0;
+      const so = el('starOnly');
+      so.setAttribute('aria-disabled', !any);
+      so.setAttribute('aria-pressed', state.starOnly);
+      so.title = any ? 'Review starred cards (' + state.starred.length + ')' : 'Star a card first';
     }
 
     function unflipInstantly(){
@@ -340,23 +528,32 @@
       card.classList.remove('no-anim');
     }
 
+    function reshuffleAvoidingRepeat(arr){
+      const last = arr[arr.length - 1];
+      let next = shuffleArr(arr);
+      if (next[0] === last && next.length > 1){
+        const j = 1 + Math.floor(Math.random() * (next.length - 1));
+        [next[0], next[j]] = [next[j], next[0]];
+      }
+      return next;
+    }
+
     function step(dir){
       unflipInstantly();
-      if (state.mode === 'shuf'){
-        let pos = state.pos + dir;
-        if (pos >= N){
-          /* deck exhausted: reshuffle and keep going, never repeating the last card first */
-          const last = state.order[N - 1];
-          let next = shuffled();
-          if (next[0] === last && N > 1){
-            const j = 1 + Math.floor(Math.random() * (N - 1));
-            [next[0], next[j]] = [next[j], next[0]];
-          }
-          state.order = next;
-          pos = 0;
-        } else if (pos < 0){
-          pos = N - 1;
+      if (state.starOnly){
+        const L = starredIndices().length;
+        if (state.mode === 'shuf'){
+          let p = state.fPos + dir;
+          if (p >= L){ state.fOrder = reshuffleAvoidingRepeat(state.fOrder); p = 0; }
+          else if (p < 0) p = L - 1;
+          state.fPos = p;
+        } else {
+          state.fSeqPos = (state.fSeqPos + dir + L) % L;
         }
+      } else if (state.mode === 'shuf'){
+        let pos = state.pos + dir;
+        if (pos >= N){ state.order = reshuffleAvoidingRepeat(state.order); pos = 0; }
+        else if (pos < 0) pos = N - 1;
         state.pos = pos;
       } else {
         state.seqIdx = (state.seqIdx + dir + N) % N;
@@ -372,7 +569,123 @@
         state.order = shuffled();
         state.pos = 0;
       }
+      if (state.starOnly) ensureStarredDeck();
       el('shuffle').setAttribute('aria-pressed', state.mode === 'shuf');
+      saveState();
+      render();
+    }
+
+    function toggleStarOnly(){
+      if (!state.starOnly && !state.starred.length) return;
+      unflipInstantly();
+      state.starOnly = !state.starOnly;
+      if (state.starOnly){
+        state.fSeqPos = 0;
+        state.fOrder = shuffleArr(starredIndices());
+        state.fPos = 0;
+      }
+      saveState();
+      render();
+    }
+
+    /* toggle a star and keep whatever card is showing on screen */
+    function toggleStar(idx){
+      const id = cards[idx].id;
+      const shownIdx = currentIndex();
+      if (isStarred(id)) state.starred = state.starred.filter(x => x !== id);
+      else state.starred.push(id);
+
+      if (state.starOnly){
+        const sIdx = starredIndices();
+        if (!sIdx.length){
+          /* nothing left to review: drop back to the full deck at the same card */
+          state.starOnly = false;
+          if (state.mode === 'shuf') state.pos = Math.max(0, state.order.indexOf(shownIdx));
+          else state.seqIdx = shownIdx;
+        } else if (state.mode === 'shuf'){
+          const setS = new Set(sIdx);
+          let fo = (state.fOrder || []).filter(i => setS.has(i));
+          sIdx.forEach(i => { if (!fo.includes(i)) fo.push(i); });
+          state.fOrder = fo;
+          const p = fo.indexOf(shownIdx);
+          state.fPos = p >= 0 ? p : Math.min(state.fPos, fo.length - 1);
+        } else {
+          const p = sIdx.indexOf(shownIdx);
+          state.fSeqPos = p >= 0 ? p : Math.min(state.fSeqPos, sIdx.length - 1);
+        }
+      }
+      saveState();
+      render();
+      syncListStars();
+    }
+
+    /* ── list view ── */
+    function buildList(){
+      const scroll = el('listScroll');
+      let cat = null, ul = null;
+      cards.forEach((c, idx) => {
+        if (c.category !== cat){
+          cat = c.category;
+          const h = document.createElement('h2');
+          h.textContent = cat;
+          scroll.appendChild(h);
+          ul = document.createElement('ul');
+          scroll.appendChild(ul);
+        }
+        const li = document.createElement('li');
+        li.dataset.idx = idx;
+
+        const q = document.createElement('button');
+        q.className = 'rowq';
+        q.innerHTML = '<span class="num">' + c.id + '</span><span class="qt"></span>';
+        q.querySelector('.qt').textContent = c.question;
+        q.addEventListener('click', () => jumpTo(idx));
+        li.appendChild(q);
+
+        const s = document.createElement('button');
+        s.className = 'rowstar';
+        s.innerHTML = STAR_SVG;
+        s.addEventListener('click', e => { e.stopPropagation(); toggleStar(idx); });
+        li.appendChild(s);
+
+        ul.appendChild(li);
+      });
+      syncListStars();
+    }
+    function syncListStars(){
+      document.querySelectorAll('#listScroll li').forEach(li => {
+        const c = cards[+li.dataset.idx];
+        const on = isStarred(c.id);
+        const s = li.querySelector('.rowstar');
+        s.classList.toggle('on', on);
+        s.setAttribute('aria-label', (on ? 'Unstar' : 'Star') + ' question ' + c.id);
+      });
+    }
+    function openList(){
+      const cur = currentIndex();
+      document.querySelectorAll('#listScroll li').forEach(li =>
+        li.classList.toggle('current', +li.dataset.idx === cur));
+      syncListStars();
+      el('list').hidden = false;
+      const row = document.querySelector('#listScroll li.current');
+      if (row) row.scrollIntoView({ block: 'center' });
+    }
+    function closeList(){ el('list').hidden = true; }
+
+    function jumpTo(idx){
+      unflipInstantly();
+      if (state.starOnly && !isStarred(cards[idx].id)) state.starOnly = false;
+      if (state.starOnly){
+        ensureStarredDeck();
+        if (state.mode === 'shuf') state.fPos = Math.max(0, state.fOrder.indexOf(idx));
+        else state.fSeqPos = Math.max(0, starredIndices().indexOf(idx));
+      } else if (state.mode === 'shuf'){
+        if (!state.order) state.order = shuffled();
+        state.pos = Math.max(0, state.order.indexOf(idx));
+      } else {
+        state.seqIdx = idx;
+      }
+      closeList();
       saveState();
       render();
     }
@@ -386,6 +699,7 @@
       .then(data => {
         cards = data;
         loadState();
+        buildList();
         el('loading').remove();
         el('stage').hidden = false;
         el('controls').hidden = false;
@@ -394,10 +708,19 @@
         render();
 
         el('card').addEventListener('click', flip);
+        document.querySelectorAll('.card .star').forEach(b =>
+          b.addEventListener('click', e => { e.stopPropagation(); toggleStar(currentIndex()); }));
         el('prev').addEventListener('click', () => step(-1));
         el('next').addEventListener('click', () => step(1));
         el('shuffle').addEventListener('click', toggleMode);
+        el('starOnly').addEventListener('click', toggleStarOnly);
+        el('listBtn').addEventListener('click', openList);
+        el('listClose').addEventListener('click', closeList);
         document.addEventListener('keydown', e => {
+          if (!el('list').hidden){
+            if (e.key === 'Escape') closeList();
+            return;
+          }
           if (e.key === 'ArrowLeft') step(-1);
           else if (e.key === 'ArrowRight') step(1);
           else if ((e.key === ' ' || e.key === 'Enter') && document.activeElement === el('card')){
