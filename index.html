@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="theNoonLight — a small collection of projects: a timeline of the universe, a true-scale trip through deep time, and civics flashcards.">
+  <meta name="description" content="theNoonLight">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#000000">
   <title>theNoonLight</title>
@@ -11,18 +11,14 @@
   <link rel="canonical" href="https://thenoonlight.com/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="theNoonLight">
-  <meta property="og:description" content="A small collection of projects: a timeline of the universe, a true-scale trip through deep time, and civics flashcards.">
   <meta property="og:url" content="https://thenoonlight.com/">
   <meta name="twitter:card" content="summary">
   <style>
     :root{
       color-scheme: dark;
-      --bg:     #0a0a0a;
-      --border: #2a2a2a;
-      --text:   #f0f0f0;
-      --text2:  #c6c6c6;
-      --muted:  #8a8a8a;
-      --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+      --bg:    #0a0a0a;
+      --text:  #f0f0f0;
+      --muted: #8a8a8a;
       --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, monospace;
     }
     *{ box-sizing: border-box; }
@@ -30,69 +26,28 @@
     body{
       background: var(--bg);
       color: var(--text);
-      font-family: var(--sans);
+      font-family: var(--mono);
       -webkit-tap-highlight-color: transparent;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      display:flex; justify-content:center;
+      display:flex; justify-content:center; align-items:center;
     }
-    main{
-      width:100%; max-width: 560px;
-      padding: calc(18vh + env(safe-area-inset-top)) 28px 64px;
-    }
-    h1{
-      font-family: var(--mono);
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin: 0 0 42px;
-    }
-    nav{ display:flex; flex-direction:column; }
+    nav{ display:flex; flex-direction:column; gap: 26px; }
     nav a{
-      display:block;
-      text-decoration:none;
-      padding: 22px 0;
-      border-top: 1px solid var(--border);
-    }
-    nav a:last-child{ border-bottom: 1px solid var(--border); }
-    nav .title{
-      color: var(--text);
-      font-size: 1.15rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    nav .desc{
-      display:block;
-      margin-top: 5px;
       color: var(--muted);
-      font-size: 0.85rem;
-      line-height: 1.45;
+      text-decoration: none;
+      font-size: 1rem;
+      letter-spacing: 0.04em;
     }
-    @media (hover:hover){
-      nav a:hover .title{ text-decoration: underline; text-underline-offset: 4px; }
-      nav a:hover .desc{ color: var(--text2); }
-    }
-    nav a:focus-visible{ outline: 2px solid var(--muted); outline-offset: 4px; }
+    nav a:hover, nav a:focus-visible{ color: var(--text); }
+    nav a:focus-visible{ outline: none; text-decoration: underline; text-underline-offset: 5px; }
   </style>
 </head>
 <body>
-  <main>
-    <h1>theNoonLight</h1>
-    <nav>
-      <a href="/universe/">
-        <span class="title">Since the Big Bang</span>
-        <span class="desc">13.787 billion years as a grid of squares, from the Big Bang to today.</span>
-      </a>
-      <a href="/beta/">
-        <span class="title">It All Started Right Here</span>
-        <span class="desc">The same 13.8 billion years at true scale — one scroll-driven trip around the Earth.</span>
-      </a>
-      <a href="/citizen/">
-        <span class="title">Citizen</span>
-        <span class="desc">Flashcards for the 128-question 2025 USCIS civics test.</span>
-      </a>
-    </nav>
-  </main>
+  <nav>
+    <a href="/beta/">/beta</a>
+    <a href="/universe/">/universe</a>
+    <a href="/citizen/">/citizen</a>
+  </nav>
 </body>
 </html>
