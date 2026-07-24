@@ -51,11 +51,12 @@
       display:flex; flex-direction:column;
     }
 
-    /* ── colour legend/filter: a blurred pill floating over the grid ── */
+    /* ── colour legend/filter: a blurred pill in its own band above the grid ── */
     .legend{
-      position:absolute; top:2px; right:0; z-index:5;
+      flex:0 0 auto; align-self:flex-end; z-index:5;
       display:flex; flex-wrap:wrap; gap:5px 14px; justify-content:flex-end; align-items:center;
-      max-width:calc(100% - 16px);
+      max-width:calc(100% - 32px);
+      margin:calc(6px + env(safe-area-inset-top)) 16px 0;
       background:rgba(12,12,12,0.55);
       -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
       border:1px solid var(--border); border-radius:999px;
@@ -78,8 +79,8 @@
       flex:1 1 auto;
       position:relative;
       min-height:0; min-width:0;
-      /* top gap so row 0 clears the edge AND the big-bang pill has room above it */
-      margin:calc(36px + env(safe-area-inset-top)) 16px 0;
+      /* top gap so the big-bang pill has room above row 0 (the notch/safe-area is handled by the legend band above) */
+      margin:36px 16px 0;
     }
     .scroller{
       position:absolute; inset:0;
@@ -395,8 +396,8 @@
 </head>
 <body>
   <div class="app">
+    <div class="legend" id="legend" role="group" aria-label="Categories — tap to filter"></div>
     <div class="stage">
-      <div class="legend" id="legend" role="group" aria-label="Categories — tap to filter"></div>
       <div class="scroller" id="scroller" tabindex="0" role="region"
            aria-label="Timeline of the universe, from the Big Bang to today. Scroll to move through time.">
         <div class="spacer" id="spacer">
