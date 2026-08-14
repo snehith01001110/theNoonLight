@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#090a0d" />
+  <title>Atlas — Agentic codebase map</title>
+  <meta name="description" content="A visual control plane for agentic software development." />
+  <style>
+    :root{
+      --bg:#090a0d;--panel:#0f1116;--panel2:#14171d;--line:#252933;--line2:#343a47;
+      --text:#f3f5f7;--muted:#8d95a3;--soft:#b8bec8;--green:#65d39a;--amber:#f5b75d;
+      --violet:#a78bfa;--cyan:#67d7eb;--red:#ef7777;--mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      --sans:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    }
+    *{box-sizing:border-box} html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--sans)}
+    button{font:inherit} .shell{height:100%;display:grid;grid-template-rows:52px 1fr;overflow:hidden}
+    .topbar{display:flex;align-items:center;gap:18px;padding:0 18px;border-bottom:1px solid var(--line);background:#0b0d11}
+    .brand{display:flex;align-items:center;gap:9px;font-weight:650;letter-spacing:-.02em}.mark{width:18px;height:18px;border:1px solid #697182;border-radius:5px;position:relative;box-shadow:inset 0 0 0 4px #11141a}.mark:after{content:"";position:absolute;width:4px;height:4px;border-radius:50%;background:var(--green);right:2px;top:2px;box-shadow:0 0 10px var(--green)}
+    .crumb{color:var(--muted);font-family:var(--mono);font-size:12px}.topnav{display:flex;align-self:stretch;margin-left:10px}.topnav button{background:none;border:0;color:var(--muted);padding:0 14px;cursor:pointer;border-bottom:2px solid transparent;font-size:13px}.topnav button.active{color:var(--text);border-color:var(--text)}
+    .top-actions{margin-left:auto;display:flex;align-items:center;gap:9px}.pill,.ghost,.primary{border:1px solid var(--line2);border-radius:7px;background:var(--panel2);color:var(--soft);height:30px;padding:0 10px;font-size:12px;cursor:pointer}.pill{font-family:var(--mono);display:flex;align-items:center;gap:6px}.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 7px #65d39a88}.primary{background:#f1f3f5;color:#111318;border-color:#f1f3f5;font-weight:650}.primary:hover{background:#fff}.ghost:hover,.pill:hover{border-color:#4b5363;color:var(--text)}
+    .workspace{min-height:0;display:grid;grid-template-columns:216px minmax(0,1fr) 300px}.sidebar,.inspector{background:#0c0e12;min-height:0;overflow:auto}.sidebar{border-right:1px solid var(--line);padding:14px 12px}.inspector{border-left:1px solid var(--line);padding:15px}
+    .section-label{text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:#666e7c;margin:11px 8px 8px;font-weight:700}.repo-title{font-family:var(--mono);font-size:12px;color:var(--soft);padding:7px 8px}.tree{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.9}.tree .item{padding:1px 7px;border-radius:5px;display:flex;align-items:center;gap:7px}.tree .item:hover{background:#151820;color:var(--soft)}.tree .indent{padding-left:21px}.tree .indent2{padding-left:36px}.file-dot{width:5px;height:5px;border-radius:50%;background:#4e5562}.tree .hot .file-dot{background:var(--amber);box-shadow:0 0 7px #f5b75d66}.tree .working .file-dot{background:var(--violet);box-shadow:0 0 7px #a78bfa88}
+    .agent-list{display:flex;flex-direction:column;gap:5px}.agent-row{border:1px solid transparent;border-radius:7px;padding:8px;cursor:pointer;display:grid;grid-template-columns:9px 1fr;gap:8px}.agent-row:hover,.agent-row.active{background:#14171d;border-color:#252a34}.agent-row .agent-dot{width:8px;height:8px;border-radius:50%;margin-top:4px}.a1{background:var(--violet);box-shadow:0 0 8px #a78bfa88}.a2{background:var(--cyan);box-shadow:0 0 8px #67d7eb88}.a3{background:var(--amber);box-shadow:0 0 8px #f5b75d88}.agent-row b{font-size:12px;font-weight:600}.agent-row small{display:block;color:var(--muted);font-family:var(--mono);font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .canvas-wrap{min-width:0;min-height:0;display:grid;grid-template-rows:42px 1fr 34px;background:#0a0c10}.canvas-toolbar{display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px;gap:10px}.canvas-toolbar .spacer{flex:1}.zoom{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}.zoom button{background:#11141a;color:var(--muted);border:0;border-right:1px solid var(--line);width:28px;height:24px;cursor:pointer}.zoom button:last-child{border:0}.zoom button:hover{color:var(--text)}
+    .canvas{position:relative;overflow:auto;padding:22px;background-image:radial-gradient(#242833 1px,transparent 1px);background-size:20px 20px}.map{min-width:760px;min-height:560px;height:100%;display:grid;grid-template-columns:1.1fr .9fr .75fr;grid-template-rows:1fr .8fr;gap:10px;transform-origin:center;transition:transform .18s ease}
+    .zone{position:relative;border:1px solid #2b303a;border-radius:11px;background:linear-gradient(180deg,#12151b,#0f1217);overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s,opacity .15s}.zone:hover{border-color:#555e6e;transform:translateY(-1px)}.zone.dim{opacity:.22}.zone.selected{border-color:#aeb7c6}.zone-head{height:36px;border-bottom:1px solid #242934;display:flex;align-items:center;padding:0 11px;gap:8px;font-family:var(--mono);font-size:11px;color:#a7afbb}.zone-head .count{margin-left:auto;color:#606877;font-size:10px}.cells{height:calc(100% - 36px);padding:8px;display:grid;gap:6px}.auth .cells{grid-template-columns:1.2fr .8fr;grid-template-rows:1fr 1fr}.billing .cells{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}.api .cells{grid-template-columns:1fr 1.1fr 1fr}.data .cells{grid-template-columns:1fr 1.2fr}.tests .cells{grid-template-columns:repeat(3,1fr)}
+    .cell{border:1px solid #262b35;background:#151820;border-radius:7px;padding:8px;font-family:var(--mono);font-size:10px;color:#737c8b;position:relative;overflow:hidden;transition:.15s}.cell:hover{border-color:#444c5a;color:#c5cbd4}.cell strong{display:block;color:#aeb6c2;font-weight:500;margin-bottom:5px}.cell .meta{font-size:9px;color:#5e6674}.cell.agent1{border-color:#6f5fb5;background:linear-gradient(135deg,#1e1a2b,#151820)}.cell.agent2{border-color:#477f8b;background:linear-gradient(135deg,#142429,#151820)}.cell.agent3{border-color:#8b6838;background:linear-gradient(135deg,#292117,#151820)}.cell.conflict{border-color:#9b5252;background:repeating-linear-gradient(135deg,#26191b,#26191b 6px,#1d171a 6px,#1d171a 12px)}
+    .cell.agent1:after,.cell.agent2:after,.cell.agent3:after,.cell.conflict:after{content:"";position:absolute;inset:-35%;border-radius:50%;animation:pulse 2.5s infinite}.cell.agent1:after{box-shadow:inset 0 0 35px #a78bfa22}.cell.agent2:after{box-shadow:inset 0 0 35px #67d7eb22}.cell.agent3:after{box-shadow:inset 0 0 35px #f5b75d22}.cell.conflict:after{box-shadow:inset 0 0 35px #ef777733}@keyframes pulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
+    .auth{grid-column:1;grid-row:1}.billing{grid-column:2;grid-row:1}.api{grid-column:3;grid-row:1 / span 2}.data{grid-column:1;grid-row:2}.tests{grid-column:2;grid-row:2}
+    .agent-tag{position:absolute;right:9px;top:9px;border:1px solid currentColor;border-radius:999px;padding:3px 7px;font-size:9px;font-family:var(--mono);z-index:3;background:#101218}.tag1{color:var(--violet)}.tag2{color:var(--cyan)}.tag3{color:var(--amber)}
+    .statusbar{border-top:1px solid var(--line);display:flex;align-items:center;padding:0 12px;gap:14px;color:#656d7a;font-family:var(--mono);font-size:10px}.statusbar .right{margin-left:auto}.legend{display:flex;align-items:center;gap:12px}.legend span{display:flex;align-items:center;gap:5px}.legend i{display:inline-block;width:6px;height:6px;border-radius:50%}
+    .inspector h2{font-size:15px;margin:4px 0 5px;letter-spacing:-.01em}.inspector .sub{font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:17px}.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:17px}.metric{background:#12151a;border:1px solid var(--line);border-radius:8px;padding:10px}.metric strong{font-family:var(--mono);font-size:15px}.metric span{display:block;color:var(--muted);font-size:10px;margin-top:4px}.inspect-section{border-top:1px solid var(--line);padding-top:13px;margin-top:13px}.inspect-title{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:#6d7582;font-weight:700;margin-bottom:10px}.task{border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:7px;background:#11141a}.task-head{display:flex;align-items:center;gap:7px;font-size:11px}.task p{font-size:11px;line-height:1.45;color:var(--soft);margin:7px 0}.task footer{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:#67707f}.check{display:flex;align-items:center;gap:7px;color:var(--soft);font-size:11px;padding:5px 0}.check .ok{color:var(--green)}.check .warn{color:var(--amber)}.change-list{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.8}.change-list b{color:#aeb6c2;font-weight:500}.empty{height:100%;display:grid;place-items:center;color:var(--muted);text-align:center}.empty strong{color:var(--text);display:block;margin-bottom:6px}
+    .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);background:#eef1f4;color:#15171b;border-radius:7px;padding:9px 13px;font-size:12px;opacity:0;pointer-events:none;transition:.18s;box-shadow:0 14px 50px #0008;z-index:30}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:900px){.workspace{grid-template-columns:0 minmax(0,1fr) 270px}.sidebar{display:none}.crumb{display:none}.topnav button{padding:0 9px}.topbar{gap:8px}.map{min-width:680px}.inspector{padding:12px}}
+    @media(max-width:680px){.workspace{grid-template-columns:1fr}.inspector{display:none}.top-actions .pill{display:none}.brand span{display:none}.canvas{padding:12px}.map{min-width:640px;min-height:540px}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><i class="mark"></i><span>Atlas</span></div>
+    <div class="crumb">acme / payments · main @ 8f3c2a1</div>
+    <nav class="topnav" aria-label="views">
+      <button class="active" data-view="map">Map</button>
+      <button data-view="agents">Agents</button>
+      <button data-view="changes">Changes</button>
+    </nav>
+    <div class="top-actions">
+      <button class="pill"><i class="dot"></i> synced with GitHub</button>
+      <button class="ghost" id="forkBtn">+ fork workspace</button>
+      <button class="primary" id="newTask">New task</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="sidebar">
+      <div class="section-label">Repository</div>
+      <div class="repo-title">▾ acme/payments</div>
+      <div class="tree">
+        <div class="item">▾ app</div>
+        <div class="item indent working"><i class="file-dot"></i>auth</div>
+        <div class="item indent hot"><i class="file-dot"></i>billing</div>
+        <div class="item indent"><i class="file-dot"></i>api</div>
+        <div class="item">▾ db</div>
+        <div class="item indent hot"><i class="file-dot"></i>models</div>
+        <div class="item indent"><i class="file-dot"></i>migrations</div>
+        <div class="item">▾ tests</div>
+        <div class="item indent"><i class="file-dot"></i>integration</div>
+      </div>
+      <div class="section-label" style="margin-top:20px">Active agents</div>
+      <div class="agent-list">
+        <div class="agent-row active" data-agent="all"><i class="agent-dot" style="background:#7c8492"></i><div><b>All workspaces</b><small>3 agents · 17 files</small></div></div>
+        <div class="agent-row" data-agent="1"><i class="agent-dot a1"></i><div><b>Claude</b><small>idempotency retry fix</small></div></div>
+        <div class="agent-row" data-agent="2"><i class="agent-dot a2"></i><div><b>Codex</b><small>webhook validation</small></div></div>
+        <div class="agent-row" data-agent="3"><i class="agent-dot a3"></i><div><b>Gemini</b><small>migration cleanup</small></div></div>
+      </div>
+    </aside>
+
+    <section class="canvas-wrap">
+      <div class="canvas-toolbar">
+        <span id="viewTitle">Codebase map</span><span>·</span><span id="viewMeta">42 files · 5 domains · 3 active agents</span>
+        <div class="spacer"></div>
+        <button class="ghost" id="conflictBtn" style="height:25px">show conflicts</button>
+        <div class="zoom"><button id="zoomOut">−</button><button id="zoomReset">⌾</button><button id="zoomIn">+</button></div>
+      </div>
+      <div class="canvas" id="canvas">
+        <div class="map" id="map">
+          <section class="zone auth" data-zone="Authentication" data-files="8" data-risk="medium">
+            <div class="zone-head">auth/<span class="count">8 files</span></div><span class="agent-tag tag1">Claude · working</span>
+            <div class="cells">
+              <div class="cell agent1"><strong>middleware.py</strong><span class="meta">+34 −8 · editing</span></div>
+              <div class="cell"><strong>tokens.py</strong><span class="meta">214 loc</span></div>
+              <div class="cell agent1"><strong>session.py</strong><span class="meta">+12 −4 · changed</span></div>
+              <div class="cell"><strong>permissions.py</strong><span class="meta">188 loc</span></div>
+            </div>
+          </section>
+          <section class="zone billing" data-zone="Billing" data-files="11" data-risk="high">
+            <div class="zone-head">billing/<span class="count">11 files</span></div><span class="agent-tag tag2">Codex · testing</span>
+            <div class="cells">
+              <div class="cell agent2"><strong>webhooks.py</strong><span class="meta">+67 −21</span></div>
+              <div class="cell agent2"><strong>stripe.py</strong><span class="meta">+19 −6</span></div>
+              <div class="cell conflict"><strong>retry.py</strong><span class="meta">overlap · 2 agents</span></div>
+              <div class="cell"><strong>ledger.py</strong><span class="meta">302 loc</span></div>
+            </div>
+          </section>
+          <section class="zone api" data-zone="API surface" data-files="9" data-risk="low">
+            <div class="zone-head">api/<span class="count">9 files</span></div>
+            <div class="cells">
+              <div class="cell"><strong>routes.py</strong><span class="meta">421 loc</span></div>
+              <div class="cell agent2"><strong>schemas.py</strong><span class="meta">+8 −3</span></div>
+              <div class="cell"><strong>deps.py</strong><span class="meta">98 loc</span></div>
+            </div>
+          </section>
+          <section class="zone data" data-zone="Data layer" data-files="7" data-risk="high">
+            <div class="zone-head">db/<span class="count">7 files</span></div><span class="agent-tag tag3">Gemini · working</span>
+            <div class="cells">
+              <div class="cell agent3"><strong>models.py</strong><span class="meta">+23 −14</span></div>
+              <div class="cell agent3"><strong>migration_184.sql</strong><span class="meta">new · pending</span></div>
+            </div>
+          </section>
+          <section class="zone tests" data-zone="Test suite" data-files="7" data-risk="low">
+            <div class="zone-head">tests/<span class="count">7 files</span></div>
+            <div class="cells">
+              <div class="cell agent1"><strong>test_retry.py</strong><span class="meta">+84 · passing</span></div>
+              <div class="cell agent2"><strong>test_webhooks.py</strong><span class="meta">+47 · passing</span></div>
+              <div class="cell"><strong>test_auth.py</strong><span class="meta">132 tests</span></div>
+            </div>
+          </section>
+        </div>
+      </div>
+      <footer class="statusbar">
+        <div class="legend"><span><i style="background:var(--violet)"></i>Claude</span><span><i style="background:var(--cyan)"></i>Codex</span><span><i style="background:var(--amber)"></i>Gemini</span><span><i style="background:var(--red)"></i>overlap</span></div>
+        <span class="right">main · clean base · 8f3c2a1</span>
+      </footer>
+    </section>
+
+    <aside class="inspector" id="inspector">
+      <div class="section-label" style="margin-left:0">Live overview</div>
+      <h2 id="inspectName">3 agents are working</h2>
+      <div class="sub" id="inspectSub">base: main@8f3c2a1 · updated 4s ago</div>
+      <div class="metric-grid">
+        <div class="metric"><strong>17</strong><span>files changed</span></div>
+        <div class="metric"><strong>2</strong><span>overlap risks</span></div>
+        <div class="metric"><strong>391</strong><span>tests passing</span></div>
+        <div class="metric"><strong>3</strong><span>workspaces</span></div>
+      </div>
+      <div class="inspect-section">
+        <div class="inspect-title">Active work</div>
+        <div class="task"><div class="task-head"><i class="agent-dot a1"></i><b>Fix payment retry bug</b></div><p>Add idempotency handling so Stripe retries cannot double-charge.</p><footer><span>Claude · working</span><span>6 files</span></footer></div>
+        <div class="task"><div class="task-head"><i class="agent-dot a2"></i><b>Validate webhooks</b></div><p>Harden signature validation and reject stale delivery timestamps.</p><footer><span>Codex · tests pass</span><span>7 files</span></footer></div>
+        <div class="task"><div class="task-head"><i class="agent-dot a3"></i><b>Clean migration path</b></div><p>Collapse the duplicate migration and verify upgrade from v183.</p><footer><span>Gemini · working</span><span>4 files</span></footer></div>
+      </div>
+      <div class="inspect-section">
+        <div class="inspect-title">Verification</div>
+        <div class="check"><span class="ok">✓</span> unit tests <span style="margin-left:auto;color:var(--muted)">391/391</span></div>
+        <div class="check"><span class="ok">✓</span> ruff + mypy</div>
+        <div class="check"><span class="warn">△</span> migration review <span style="margin-left:auto;color:var(--amber)">needed</span></div>
+      </div>
+    </aside>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+  const toast=t=>{const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>el.classList.remove('show'),1700)};
+  let scale=1;
+  function setScale(v){scale=Math.max(.72,Math.min(1.28,v));$('#map').style.transform=`scale(${scale})`;}
+  $('#zoomIn').onclick=()=>setScale(scale+.08); $('#zoomOut').onclick=()=>setScale(scale-.08); $('#zoomReset').onclick=()=>setScale(1);
+  $('#forkBtn').onclick=()=>toast('Workspace forked from main@8f3c2a1'); $('#newTask').onclick=()=>toast('New agent task ready to assign');
+  $('#conflictBtn').onclick=()=>{const c=$('.conflict');c.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});c.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:700});toast('2 agents overlap in billing/retry.py')};
+  $$('.agent-row').forEach(r=>r.onclick=()=>{ $$('.agent-row').forEach(x=>x.classList.remove('active'));r.classList.add('active'); const a=r.dataset.agent; $$('.zone').forEach(z=>z.classList.remove('dim')); if(a!=='all'){ $$('.zone').forEach(z=>{if(!z.querySelector('.agent'+a))z.classList.add('dim')}); toast('Filtered to '+r.querySelector('b').textContent+' workspace'); } else toast('Showing all workspaces'); });
+  $$('.zone').forEach(z=>z.onclick=()=>{ $$('.zone').forEach(x=>x.classList.remove('selected'));z.classList.add('selected'); $('#inspectName').textContent=z.dataset.zone; $('#inspectSub').textContent=`${z.dataset.files} files · ${z.dataset.risk} risk · click a highlighted file to inspect`; const tags=[...z.querySelectorAll('.agent-tag')].map(x=>x.textContent).join(', '); const files=[...z.querySelectorAll('.cell')].map(x=>x.querySelector('strong').textContent); $('#inspector').querySelector('.inspect-section').innerHTML=`<div class="inspect-title">Region detail</div><div class="task"><div class="task-head"><b>${z.dataset.zone}</b></div><p>${tags||'No active agent currently owns this region.'}</p><footer><span>${z.dataset.risk} risk</span><span>${z.dataset.files} files</span></footer></div><div class="change-list">${files.map(f=>`<div><b>${f}</b></div>`).join('')}</div>`; });
+  $$('.topnav button').forEach(btn=>btn.onclick=()=>{ $$('.topnav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active'); const v=btn.dataset.view; if(v==='map'){location.reload();return;} const canvas=$('#canvas'); if(v==='agents'){ $('#viewTitle').textContent='Agent workspaces';$('#viewMeta').textContent='3 isolated environments · 2 executing · 1 verified'; canvas.innerHTML=`<div class="empty"><div><strong>Agent workspace view</strong>Each agent owns an isolated filesystem snapshot.<br><br>Claude · working · 6 files<br>Codex · verified · 7 files<br>Gemini · working · 4 files</div></div>`; } else { $('#viewTitle').textContent='Proposed changes';$('#viewMeta').textContent='3 changes · 17 files · 1 review required'; canvas.innerHTML=`<div class="empty"><div><strong>Change graph</strong>Intent → workspace → evidence → review → merge<br><br>CHG-1842 · Retry idempotency · working<br>CHG-1843 · Webhook validation · verified<br>CHG-1844 · Migration cleanup · review needed</div></div>`; } });
+</script>
+</body>
+</html>
