@@ -6,14 +6,27 @@ Pages from this repository's `main` branch.
 
 - `index.html`, `style.css`, `demos.js`: the page and its interactive
   illustrations (no framework, no build step).
-- `icon.png`, `favicon.png`, `grain.png`, `og.png`: images. `og.png` (the link
-  preview) is made by `python3 tools/make-og.py` (Pillow, macOS fonts).
+- Colours: the noonlight theme
+  ([snehithnayak.github.io/themes](https://github.com/snehith01001110/snehithnayak.github.io/tree/main/themes)),
+  as tokens at the top of `style.css`. The three agents are the theme's aqua,
+  pink and green (`COLORS` in `demos.js`); amber is kept for approvals.
+- `fonts/`: JetBrains Mono, self-hosted (latin subset, SIL OFL in
+  `fonts/OFL.txt`), so the page loads nothing from other sites.
+- `icon.png`, `favicon.png`, `favicon.ico`, `grain.png`, `og.png`: images.
+  `og.png` (the link preview) is made by `python3 tools/make-og.py` (Pillow,
+  macOS fonts); after regenerating it, bump the `?v=` on `og:image` and
+  `twitter:image`.
+- `robots.txt`, `sitemap.xml`: for search engines.
 - `atlas/`: a redirect from the old address, `/atlas`, to the home page.
 - `404.html`: shown for any other old address.
 
 Downloads are GitHub releases of
 [noon-releases](https://github.com/snehith01001110/noon-releases); the page's
-button points to the latest one.
+buttons point to the latest one.
+
+**For a new release,** update the version and SHA-256 in `index.html`: the
+line under the hero button, the footer's checksum, and `softwareVersion` in
+the JSON-LD.
 
 Earlier projects that lived here (/universe, /beta, /citizen, /paloma and the
 hub page) were taken down on October 27, 2026. They're in the history: the
