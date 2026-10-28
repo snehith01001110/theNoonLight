@@ -1,55 +1,140 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="theNoonLight">
-  <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#000000">
-  <title>theNoonLight</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="canonical" href="https://thenoonlight.com/">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="theNoonLight">
-  <meta property="og:url" content="https://thenoonlight.com/">
-  <meta name="twitter:card" content="summary">
-  <style>
-    :root{
-      color-scheme: dark;
-      --bg:    #0a0a0a;
-      --text:  #f2a35c;
-      --muted: #b06a34;
-      --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Monaco, monospace;
-    }
-    *{ box-sizing: border-box; }
-    html,body{ height:100%; margin:0; }
-    body{
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--mono);
-      -webkit-tap-highlight-color: transparent;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      display:flex; justify-content:center; align-items:center;
-    }
-    nav{ display:flex; flex-direction:column; gap: 26px; }
-    nav a{
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 1rem;
-      letter-spacing: 0.04em;
-    }
-    nav a:hover, nav a:focus-visible{ color: var(--text); }
-    nav a:focus-visible{ outline: none; text-decoration: underline; text-underline-offset: 5px; }
-    .beta{ color:#7f858f; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13161f">
+<meta name="color-scheme" content="dark">
+<title>Noon</title>
+<meta name="description" content="Noon runs Claude Code and Codex on your local projects, each task in its own workspace, with a live map of your code. Free for Apple silicon Macs.">
+<link rel="canonical" href="https://thenoonlight.com/">
+<meta property="og:title" content="Noon">
+<meta property="og:description" content="Run coding agents side by side, and see where they're working.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thenoonlight.com/">
+<meta property="og:image" content="https://thenoonlight.com/og.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Noon">
+<meta name="twitter:description" content="Run coding agents side by side, and see where they're working.">
+<meta name="twitter:image" content="https://thenoonlight.com/og.png?v=2">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=2">
+<script src="demos.js?v=2" defer></script>
 </head>
 <body>
-  <nav>
-    <a href="/universe/">/universe</a>
-    <a href="/citizen/">/citizen</a>
-    <a class="beta" href="/atlas/">/atlas · beta</a>
-    <a class="beta" href="/paloma/">/paloma · prototype</a>
-  </nav>
+<main class="wrap">
+  <section class="hero">
+    <img src="icon.png" alt="" width="104" height="104">
+    <h1>Noon</h1>
+    <p class="sub">Run coding agents side by side, and see where they're working.</p>
+    <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
+      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Download for Mac
+    </a>
+    <p class="fine">Free · Apple silicon · macOS 27 or later</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-map">
+    <div class="head">
+      <h2 id="h-map">Every agent on the map</h2>
+      <p>Each agent is shown at the file it last touched.</p>
+    </div>
+    <div class="window demo" id="window">
+      <div class="titlebar" aria-hidden="true"><i></i><i></i><i></i><span>Noon — shop</span><em>Illustration</em></div>
+      <div class="win-body">
+        <div class="side">
+          <div class="label">Tasks</div>
+          <div id="tasks"></div>
+          <div class="changes">
+            <p class="ch-title"><span class="dot"></span><span id="ch-name"></span></p>
+            <pre class="status" id="status" aria-label="Changes"></pre>
+            <div class="ask-box" id="ask" hidden><span id="ask-text"></span><button class="pill approve" id="approve" type="button">Approve</button></div>
+            <button class="pill merge" id="merge" type="button" hidden>Merge</button>
+          </div>
+        </div>
+        <div class="canvas">
+          <svg id="map" role="img" aria-label="A sample project's systems, with three agents moving between them"></svg>
+          <span class="hint">Point at a system · click a task</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-ws">
+    <div class="head">
+      <h2 id="h-ws">A workspace per task</h2>
+      <p>Each task starts from a fresh checkout of your current commit, on its own branch. Uncommitted edits and ignored files stay behind.</p>
+    </div>
+    <div class="panel ws demo" id="ws">
+      <div class="repo">
+        <p class="tree-head"><b>~/code/shop</b><span>main · 3f2a9c1</span></p>
+        <ul class="tree">
+          <li>src/</li>
+          <li>api/limits.ts <span class="mod" title="Uncommitted change">M</span></li>
+          <li class="ign">.env <i>ignored</i></li>
+          <li class="ign">node_modules/ <i>ignored</i></li>
+        </ul>
+        <button class="pill" id="ws-new" type="button">New task</button>
+      </div>
+      <div class="ws-arrow" aria-hidden="true"><span>checkout</span></div>
+      <ol class="copies" id="ws-copies" aria-label="Task workspaces"></ol>
+    </div>
+    <p class="hint below">Running tasks are never touched · a workspace is freed once its task is merged and stopped</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-terms">
+    <div class="head">
+      <h2 id="h-terms">Several agents at once</h2>
+      <p>Answer one while the others keep working.</p>
+    </div>
+    <div class="terms demo" id="terms"></div>
+    <p class="hint below">Click a terminal</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-git">
+    <div class="head">
+      <h2 id="h-git">Only commits merge</h2>
+      <p>Merge adds a merge commit on your branch. Nothing is pushed.</p>
+    </div>
+    <div class="panel demo" id="git-panel">
+      <svg id="git" viewBox="0 0 640 240" role="img" aria-label="Each task's branch, merged into main when you choose"></svg>
+    </div>
+    <p class="hint below">Merge a finished task here or in the window above</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-start">
+    <div class="head"><h2 id="h-start">Get started</h2></div>
+    <ul class="chips">
+      <li>Apple silicon</li><li>macOS 27+</li><li>Claude Code or Codex</li><li>Free</li>
+    </ul>
+    <div class="center">
+      <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download for Mac
+      </a>
+      <p class="hint below">Open the ZIP and move Noon to Applications.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="f-row">
+      <a href="mailto:snehithn5@gmail.com">snehithn5@gmail.com</a>
+      <a href="https://github.com/snehith01001110/noon-releases/releases">Release notes</a>
+      <a href="https://github.com/snehith01001110/noon-releases/blob/main/LICENSE">License</a>
+      <span>© 2026 Snehith Nayak</span>
+    </div>
+    <details>
+      <summary>SHA-256 · version 0.1.0</summary>
+      <code>a588294ba2d0b7674c0cdd4324cb1d169a4d0949eb2b94a2caf665250f90612c</code>
+    </details>
+    <p>Free to use, all rights reserved. Provided as is, without warranty of any kind. The agents you run have their own terms.</p>
+  </footer>
+</main>
 </body>
 </html>

@@ -1,21 +1,20 @@
-# theNoonLight
+# thenoonlight.com
 
-A small collection of projects at [thenoonlight.com](https://thenoonlight.com), hosted on GitHub Pages. The root (`index.html`) is a minimal hub that links to each project; every project lives at its own route (a directory with an `index.html`).
+The page for **Noon**, a Mac app that runs coding agents side by side
+(Claude Code and Codex) and shows where they're working. Hosted on GitHub
+Pages from this repository's `main` branch.
 
-## Projects
+- `index.html`, `style.css`, `demos.js`: the page and its interactive
+  illustrations (no framework, no build step).
+- `icon.png`, `favicon.png`, `grain.png`, `og.png`: images. `og.png` (the link
+  preview) is made by `python3 tools/make-og.py` (Pillow, macOS fonts).
+- `atlas/`: a redirect from the old address, `/atlas`, to the home page.
+- `404.html`: shown for any other old address.
 
-### /universe — Since the Big Bang
+Downloads are GitHub releases of
+[noon-releases](https://github.com/snehith01001110/noon-releases); the page's
+button points to the latest one.
 
-An interactive timeline of the universe — 13.787 billion years as a grid of squares, from the Big Bang to today. A single self-contained static page: [`universe/index.html`](universe/index.html).
-
-### /beta — It All Started Right Here
-
-The same 13.8 billion years mapped at true scale onto one scroll-driven trip around the Earth, starting and ending at your own location. Source in [`beta-src/`](beta-src/) (Vite + MapLibre + Three.js), built output committed in [`beta/`](beta/). See [`beta-src/README.md`](beta-src/README.md) for build and deploy steps.
-
-### /citizen — Citizen
-
-A flashcard study app for the 2025 USCIS naturalization civics test (128 questions). Tap to flip between question and answer; step through in order or shuffle endlessly. Progress persists in `localStorage`. A single self-contained static page ([`citizen/index.html`](citizen/index.html)) plus its data file [`citizen/citizen-questions.json`](citizen/citizen-questions.json), extracted from the official USCIS document *128 Civics Questions and Answers (2025 version)*, M-1778 (09/25).
-
-## Adding a project
-
-Create a new directory with an `index.html` (self-contained where possible), link it from the hub in the root `index.html`, and add a short section here.
+Earlier projects that lived here (/universe, /beta, /citizen, /paloma and the
+hub page) were taken down on October 27, 2026. They're in the history: the
+tag `archive/before-noon` is the last commit with all of them.
