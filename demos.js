@@ -14,7 +14,7 @@ const LABEL = {
   stopped: "Stopped",
 };
 const BASE = "3f2a9c1"; // the project's current commit when the tasks start
-const COLORS = ["#5b9cff", "#6fd8a8", "#b39ae8"];
+const COLORS = ["#7daea3", "#d3869b", "#a9b665"]; // the noonlight theme's aqua, pink and green (amber is kept for approvals)
 
 /* ── 1. the map ─────────────────────────────────────────── */
 
@@ -171,6 +171,14 @@ function mapTick(m) {
   return null;
 }
 
+// The page starts each animated demo a few steps in, so a first look already
+// shows agents at work instead of an empty window.
+function mapWarm(m) {
+  for (let i = 0; i < 12; i++) mapTick(m); // agent 1 editing, 2 reading, 3 just started
+  m.idle = 0;
+  return m;
+}
+
 // Reduce Motion: a still moment with something in every state.
 function mapStill() {
   const m = mapModel();
@@ -231,6 +239,11 @@ function wsTick(m) {
   if (s.state === "working" && s.age >= 4) { s.state = "finished"; s.age = 0; }
   else if (s.state === "finished" && s.age >= 3) { s.merged = true; s.state = "stopped"; s.age = 0; }
   else if (s.state === "stopped" && s.age >= 3 && s.merged) wsFree(m, s.branch);
+}
+
+function wsWarm(m) {
+  wsNew(m, true); // one task already working
+  return m;
 }
 
 function wsStill() {
@@ -325,6 +338,12 @@ function termTick(m) {
   return null;
 }
 
+function termWarm(m) {
+  for (let i = 0; i < 24; i++) termTick(m); // a few lines in each terminal
+  m.idle = 0;
+  return m;
+}
+
 function termStill() {
   const m = termModel();
   for (const x of m.terms) while (x.state !== "ask" && x.state !== "finished") termLine(x);
@@ -404,7 +423,7 @@ function mountMap(ticker) {
   const mergeBtn = document.getElementById("merge");
   const narrowQ = matchMedia("(max-width: 640px)");
   const CW = 150, CH = 60;
-  let m = mapModel();
+  let m = mapWarm(mapModel());
   let pos = {};
   let cards = {};
   let tokens = [];
@@ -425,7 +444,7 @@ function mountMap(ticker) {
     svg.setAttribute("viewBox", `0 0 ${narrow ? 360 : 640} ${top + rows * CH + (rows - 1) * gy + 18}`);
     svg.textContent = "";
     const defs = svgEl("defs", {}, svg);
-    for (const [id, fill] of [["arrow", "rgba(255,255,255,0.32)"], ["arrow-hot", "rgba(255,255,255,0.85)"]]) {
+    for (const [id, fill] of [["arrow", "rgba(235,219,178,0.32)"], ["arrow-hot", "rgba(235,219,178,0.85)"]]) {
       const mk = svgEl("marker", { id, viewBox: "0 0 8 8", refX: 7.5, refY: 4, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);
       svgEl("path", { d: "M0,0.5 L8,4 L0,7.5 z", fill }, mk);
     }
@@ -572,7 +591,7 @@ function mountMap(ticker) {
     git.textContent = "";
     svgEl("path", { class: "trunk", d: `M 16 ${mainY} H ${W - 12}` }, git);
     svgEl("text", { class: "trunk-label", x: 16, y: mainY + 24 }, git).textContent = "main";
-    svgEl("text", { class: "sha-label", x: 40, y: mainY + 24, "text-anchor": "middle" }, git).textContent = BASE;
+    svgEl("text", { class: "sha-label", x: 52, y: mainY + 24 }, git).textContent = BASE; // after "main", not under it
     const order = m.agents.filter((a) => a.merged).sort((p, q) => MERGE_SHAS.indexOf(p.merged) - MERGE_SHAS.indexOf(q.merged));
     m.agents.forEach((a, k) => {
       const g = svgEl("g", { style: `--c:${COLORS[k]}` }, git);
@@ -624,7 +643,7 @@ function mountWorkspaces(ticker) {
   const panel = document.getElementById("ws");
   const list = document.getElementById("ws-copies");
   const newBtn = document.getElementById("ws-new");
-  let m = wsModel();
+  let m = wsWarm(wsModel());
   const nodes = new Map();
 
   newBtn.addEventListener("click", () => {
@@ -685,7 +704,7 @@ function mountWorkspaces(ticker) {
 
 function mountTerminals(ticker) {
   const box = document.getElementById("terms");
-  let m = termModel();
+  let m = termWarm(termModel());
   const views = m.terms.map((x, k) => {
     const art = htmlEl("article", "term", null, box);
     art.style.setProperty("--c", COLORS[k]);
@@ -745,9 +764,9 @@ function mountTerminals(ticker) {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    LABEL, MAP_AGENTS, MERGE_SHAS, mapModel, mapStep, mapTick, mapApprove, mapMerge, canMerge, mapStill,
-    sharedFiles, changesLines, wsModel, wsNew, wsTick, wsFree, canFree, freeReason, wsStill,
-    TERMS, termModel, termTick, termApprove, termLine, termStill, CONNECTIONS, KINDS, ORDER_WIDE, ORDER_NARROW,
+    LABEL, MAP_AGENTS, MERGE_SHAS, mapModel, mapStep, mapTick, mapApprove, mapMerge, canMerge, mapStill, mapWarm,
+    sharedFiles, changesLines, wsModel, wsNew, wsTick, wsFree, canFree, freeReason, wsStill, wsWarm,
+    TERMS, termModel, termTick, termApprove, termLine, termStill, termWarm, CONNECTIONS, KINDS, ORDER_WIDE, ORDER_NARROW,
   };
 } else {
   const ticker = makeTicker();

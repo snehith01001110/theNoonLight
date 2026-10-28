@@ -3,41 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#13161f">
+<meta name="theme-color" content="#0f0e0c">
 <meta name="color-scheme" content="dark">
-<title>Noon</title>
+<title>Noon: run coding agents side by side on your Mac</title>
 <meta name="description" content="Noon runs Claude Code and Codex on your local projects, each task in its own workspace, with a live map of your code. Free for Apple silicon Macs.">
 <link rel="canonical" href="https://thenoonlight.com/">
-<meta property="og:title" content="Noon">
+<meta property="og:site_name" content="Noon">
+<meta property="og:title" content="Noon: run coding agents side by side on your Mac">
 <meta property="og:description" content="Run coding agents side by side, and see where they're working.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://thenoonlight.com/">
-<meta property="og:image" content="https://thenoonlight.com/og.png?v=2">
+<meta property="og:image" content="https://thenoonlight.com/og.png?v=3">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Noon">
+<meta name="twitter:title" content="Noon: run coding agents side by side on your Mac">
 <meta name="twitter:description" content="Run coding agents side by side, and see where they're working.">
-<meta name="twitter:image" content="https://thenoonlight.com/og.png?v=2">
+<meta name="twitter:image" content="https://thenoonlight.com/og.png?v=3">
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
-<script src="demos.js?v=2" defer></script>
+<link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css?v=4">
+<script src="demos.js?v=4" defer></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "WebSite", "name": "Noon", "url": "https://thenoonlight.com/" },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Noon",
+      "description": "Run coding agents side by side on your Mac, each task in its own workspace, with a live map of your code.",
+      "url": "https://thenoonlight.com/",
+      "image": "https://thenoonlight.com/icon.png",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "macOS 27 or later, Apple silicon",
+      "softwareVersion": "0.1.0",
+      "downloadUrl": "https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": { "@type": "Person", "name": "Snehith Nayak" }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <main class="wrap">
   <section class="hero">
-    <img src="icon.png" alt="" width="104" height="104">
+    <img src="icon.png" alt="" width="104" height="104" fetchpriority="high">
     <h1>Noon</h1>
-    <p class="sub">Run coding agents side by side, and see where they're working.</p>
+    <p class="sub">Run coding agents side by side. Watch each one move across a live map of your code.</p>
     <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Download for Mac
     </a>
-    <p class="fine">Free · Apple silicon · macOS 27 or later</p>
+    <p class="fine">Version 0.1.0 · Free · macOS 27 or later on Apple silicon</p>
+    <p class="works">Works with <b>Claude Code</b> and <b>Codex</b>, signed in with your own accounts</p>
   </section>
 
   <section class="block" aria-labelledby="h-map">
@@ -53,7 +74,7 @@
           <div id="tasks"></div>
           <div class="changes">
             <p class="ch-title"><span class="dot"></span><span id="ch-name"></span></p>
-            <pre class="status" id="status" aria-label="Changes"></pre>
+            <pre class="status" id="status"></pre>
             <div class="ask-box" id="ask" hidden><span id="ask-text"></span><button class="pill approve" id="approve" type="button">Approve</button></div>
             <button class="pill merge" id="merge" type="button" hidden>Merge</button>
           </div>
@@ -85,7 +106,7 @@
       <div class="ws-arrow" aria-hidden="true"><span>checkout</span></div>
       <ol class="copies" id="ws-copies" aria-label="Task workspaces"></ol>
     </div>
-    <p class="hint below">Running tasks are never touched · a workspace is freed once its task is merged and stopped</p>
+    <p class="hint below">Workspace Cleanup frees a workspace once its task is merged and stopped, after you confirm · running tasks are never touched</p>
   </section>
 
   <section class="block" aria-labelledby="h-terms">
@@ -108,17 +129,64 @@
     <p class="hint below">Merge a finished task here or in the window above</p>
   </section>
 
+  <section class="block" aria-labelledby="h-trust">
+    <div class="head">
+      <h2 id="h-trust">Your Mac, your accounts</h2>
+      <p>Noon runs on your Mac and starts the agents you already use.</p>
+    </div>
+    <ul class="facts">
+      <li><b>Your own agents</b>Noon starts the Claude Code or Codex you've installed and signed in to. It never signs in for you, and the agents talk to their providers directly.</li>
+      <li><b>No sign-up, no analytics</b>Noon has no account and collects no usage data. Your code goes only where your agents send it.</li>
+      <li><b>Notarized by Apple</b>Each download is signed with a Developer ID and notarized. Its SHA-256 is listed at the bottom of this page.</li>
+      <li><b>Nothing is pushed</b>Merge makes a merge commit on your Mac. When and where to push is up to you.</li>
+    </ul>
+  </section>
+
+  <section class="block" aria-labelledby="h-faq">
+    <div class="head"><h2 id="h-faq">Questions</h2></div>
+    <div class="faq">
+      <details>
+        <summary>How do I push, or open a pull request?</summary>
+        <p>With your usual Git tools. Noon never pushes. Merge adds a merge commit to your project's branch on your Mac, with only the task's commits in it, and runs your repository's Git hooks as <code>git merge</code> would.</p>
+      </details>
+      <details>
+        <summary>Which agents does Noon work with?</summary>
+        <p>Claude Code, and Codex 0.160.0 or later. Noon shows their reads, edits and approval requests. Other command-line agents, such as Gemini CLI and OpenCode, can run in a task's terminal, and the map follows the files they write.</p>
+      </details>
+      <details>
+        <summary>Is a task's workspace a sandbox?</summary>
+        <p>No. A workspace is a Git worktree, a separate checkout of your project. An agent can reach any files its permission settings allow, so review its approval requests.</p>
+      </details>
+      <details>
+        <summary>Why macOS 27?</summary>
+        <p>Noon is built and tested on macOS 27 on Apple silicon, so that's what it supports today.</p>
+      </details>
+      <details>
+        <summary>What else do I need?</summary>
+        <p>Git from Apple's Command Line Tools, which Noon offers to install, and Claude Code or Codex, installed and signed in. Noon's window needs at least 1120 × 720 points, and it has a dark appearance only.</p>
+      </details>
+      <details>
+        <summary>Is Noon open source?</summary>
+        <p>No. Noon is free to use for personal or commercial work, but its source isn't public. The <a href="https://github.com/snehith01001110/noon-releases/blob/main/LICENSE">license</a> has the details.</p>
+      </details>
+    </div>
+  </section>
+
   <section class="block" aria-labelledby="h-start">
     <div class="head"><h2 id="h-start">Get started</h2></div>
     <ul class="chips">
       <li>Apple silicon</li><li>macOS 27+</li><li>Claude Code or Codex</li><li>Free</li>
     </ul>
+    <ol class="steps">
+      <li>Download Noon and open the ZIP.</li>
+      <li>Move Noon to your Applications folder, then open it.</li>
+      <li>Add a Git repository and start a task.</li>
+    </ol>
     <div class="center">
       <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Mac
       </a>
-      <p class="hint below">Open the ZIP and move Noon to Applications.</p>
     </div>
   </section>
 
@@ -134,6 +202,7 @@
       <code>ae1be8e8bedc7dc2825b9d96c6d679debdd1f7812aec8f4138f400a9a3fee79b</code>
     </details>
     <p>Free to use, all rights reserved. Provided as is, without warranty of any kind. The agents you run have their own terms.</p>
+    <p>This page sets no cookies, runs no analytics and loads nothing from other sites.</p>
   </footer>
 </main>
 </body>

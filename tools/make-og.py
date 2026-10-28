@@ -2,7 +2,7 @@
 """Render og.png — the link-preview card for thenoonlight.com.
 
 Adapted from the Pixel Pane site's tools/make-og.py. Mirrors the hero: the app
-icon, wordmark, tagline, mono footer, over Atlas's blue and violet glow. Output
+icon, wordmark, tagline, mono footer, over the noonlight theme's amber glow. Output
 is 1200x630, rendered at 2x. Needs Pillow and macOS for SF Pro; JetBrains Mono
 is fetched from Google Fonts and cached in tools/.fonts (not committed).
 
@@ -20,12 +20,13 @@ import urllib.request
 from PIL import Image, ImageDraw, ImageFont
 
 W, H, SS = 1200, 630, 2           # supersample factor for crisp shapes
-INK = (0, 0, 0)
-PAPER = (245, 245, 247)
-BLUE = (122, 166, 232)            # accent on the tagline
-VIOLET = (150, 128, 232)
-MUTED = (245, 245, 247, 168)      # --muted, 0.66
-FAINT = (245, 245, 247, 97)       # --faint, 0.38
+INK = (11, 10, 8)                 # theme: panel background
+PAPER = (235, 219, 178)           # theme: foreground
+AMBER = (216, 166, 87)            # theme: accent; on the tagline
+PINK = (211, 134, 155)
+AQUA = (125, 174, 163)
+MUTED = (168, 153, 132)           # theme: text.muted
+FAINT = (146, 131, 116)           # theme: terminal dim foreground
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -92,16 +93,16 @@ def build():
 
     # ambient glow — white bloom off the top edge, warm pool under the mark
     for cx, cy, rx, ry, rgb, peak, stop in (
-        (w / 2, -0.12 * h, 0.54 * w, 0.34 * h * 2.2, (64, 120, 230), 0.30, 1.0),
-        (0.12 * w, 0.95 * h, 0.40 * w, 0.30 * h * 2.2, VIOLET, 0.16, 1.0),
-        (0.90 * w, 0.85 * h, 0.36 * w, 0.28 * h * 2.2, (92, 206, 158), 0.10, 1.0),
+        (w / 2, -0.12 * h, 0.54 * w, 0.34 * h * 2.2, AMBER, 0.26, 1.0),
+        (0.12 * w, 0.95 * h, 0.40 * w, 0.30 * h * 2.2, PINK, 0.13, 1.0),
+        (0.90 * w, 0.85 * h, 0.36 * w, 0.28 * h * 2.2, AQUA, 0.11, 1.0),
     ):
         tint, mask = radial((w, h), cx, cy, rx, ry, rgb, peak, stop)
         img.paste(tint, (0, 0), mask)
 
     d = ImageDraw.Draw(img, "RGBA")
 
-    # The mark, taken straight from Atlas's app icon.
+    # The mark, taken straight from Noon's app icon.
     icon_path = os.path.join(HERE, "icon-512.png")
     if not os.path.exists(icon_path):
         sys.exit("missing %s" % icon_path)
@@ -122,7 +123,7 @@ def build():
     x = w / 2 - tw / 2
     y = int(0.645 * h)
     d.text((x, y), head, font=sub, fill=MUTED)
-    d.text((x + d.textlength(head, font=sub), y), tail, font=sub, fill=BLUE)
+    d.text((x + d.textlength(head, font=sub), y), tail, font=sub, fill=AMBER)
 
     # mono footer
     fsize = int(0.0165 * w)
