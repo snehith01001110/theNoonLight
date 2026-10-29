@@ -26,7 +26,12 @@ buttons point to the latest one.
 
 **For a new release,** update the version and SHA-256 in `index.html`: the
 line under the hero button, the footer's checksum, and `softwareVersion` in
-the JSON-LD.
+the JSON-LD. Update `version` and `sha256` in
+`tools/homebrew-noon/Casks/noon.rb` too, then publish the tap, the public
+repository [homebrew-noon](https://github.com/snehith01001110/homebrew-noon):
+`git subtree split --prefix tools/homebrew-noon -b tap-split && git push
+https://github.com/snehith01001110/homebrew-noon.git tap-split:main && git
+branch -D tap-split`.
 
 Earlier projects that lived here (/universe, /beta, /citizen, /paloma and the
 hub page) were taken down on October 27, 2026. They're in the history: the
