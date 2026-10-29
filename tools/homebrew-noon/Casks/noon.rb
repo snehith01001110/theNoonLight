@@ -1,6 +1,6 @@
 cask "noon" do
   version "0.1.0"
-  sha256 "ae1be8e8bedc7dc2825b9d96c6d679debdd1f7812aec8f4138f400a9a3fee79b"
+  sha256 "41a325200b3abd98f35151c03f8c47ce5e8f0405b63ac24eaddbfa1cc9523121"
 
   url "https://github.com/snehith01001110/noon-releases/releases/download/v#{version}/Noon.zip"
   name "Noon"
@@ -12,6 +12,7 @@ cask "noon" do
     strategy :github_latest
   end
 
+  auto_updates true
   depends_on arch: :arm64
   depends_on macos: :golden_gate
 
