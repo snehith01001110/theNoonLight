@@ -2,10 +2,10 @@
 """Render og.png — the link-preview card for thenoonlight.com.
 
 Adapted from the Pixel Pane site's tools/make-og.py. Mirrors the hero: the app
-icon, wordmark, tagline, mono footer, over the noonlight theme's amber glow. Output
+icon, logo, tagline, mono footer, over the noonlight theme's amber glow. Output
 is 1200x630, rendered at 2x. Needs Pillow and macOS for SF Pro; JetBrains Mono
 is fetched from Google Fonts and cached in tools/.fonts (not committed). The word is
-the drawn logo, wordmark.svg, rendered by sips.
+the drawn logo, logo.svg, rendered by sips.
 
     python3 tools/make-og.py
 
@@ -113,10 +113,10 @@ def build():
     icon = Image.open(icon_path).convert("RGBA").resize((side, side), Image.LANCZOS)
     img.paste(icon, (int(w / 2 - side / 2), int(0.245 * h - side / 2)), icon)
 
-    # the word, the logo's own drawing
+    # the logo
     with tempfile.TemporaryDirectory() as folder:
-        png = os.path.join(folder, "wordmark.png")
-        subprocess.run(["sips", "-s", "format", "png", os.path.join(ROOT, "wordmark.svg"), "--out", png],
+        png = os.path.join(folder, "logo.png")
+        subprocess.run(["sips", "-s", "format", "png", os.path.join(ROOT, "logo.svg"), "--out", png],
                        check=True, capture_output=True)
         word = Image.open(png).convert("RGBA")
         word.load()
