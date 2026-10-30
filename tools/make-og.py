@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """Render og.png — the link-preview card for thenoonlight.com.
 
-Adapted from the Pixel Pane site's tools/make-og.py. Mirrors the hero: the app
-icon, logo, tagline, mono footer, over the noonlight theme's amber glow. Output
+Adapted from the Pixel Pane site's tools/make-og.py. Mirrors the hero: the
+logo, tagline, mono footer, over the noonlight theme's amber glow. Output
 is 1200x630, rendered at 2x. Needs Pillow and macOS for SF Pro; JetBrains Mono
 is fetched from Google Fonts and cached in tools/.fonts (not committed). The word is
 the drawn logo, logo.svg, rendered by sips.
 
     python3 tools/make-og.py
 
-The icon is tools/icon-512.png, the app's 512 px icon (the page serves a
-smaller icon.png). After regenerating, bump the ?v= on og:image and twitter:image in
+After regenerating, bump the ?v= on og:image and twitter:image in
 index.html: Slack, iMessage and X cache the old artwork against the old URL.
 """
 import math
@@ -105,14 +104,6 @@ def build():
 
     d = ImageDraw.Draw(img, "RGBA")
 
-    # The app icon.
-    icon_path = os.path.join(HERE, "icon-512.png")
-    if not os.path.exists(icon_path):
-        sys.exit("missing %s" % icon_path)
-    side = int(0.14 * w)
-    icon = Image.open(icon_path).convert("RGBA").resize((side, side), Image.LANCZOS)
-    img.paste(icon, (int(w / 2 - side / 2), int(0.245 * h - side / 2)), icon)
-
     # the logo
     with tempfile.TemporaryDirectory() as folder:
         png = os.path.join(folder, "logo.png")
@@ -120,16 +111,16 @@ def build():
                        check=True, capture_output=True)
         word = Image.open(png).convert("RGBA")
         word.load()
-    word_h = int(0.082 * w * 0.82)
+    word_h = int(0.13 * w)
     word = word.resize((int(word.width * word_h / word.height), word_h), Image.LANCZOS)
-    img.paste(word, (int(w / 2 - word.width / 2), int(0.44 * h)), word)
+    img.paste(word, (int(w / 2 - word.width / 2), int(0.30 * h)), word)
 
     # tagline — accent on the product noun
     sub = sf(int(0.028 * w), "Regular")
     head, tail = "Run coding agents side by side, ", "and see where they're working."
     tw = d.textlength(head, font=sub) + d.textlength(tail, font=sub)
     x = w / 2 - tw / 2
-    y = int(0.645 * h)
+    y = int(0.62 * h)
     d.text((x, y), head, font=sub, fill=MUTED)
     d.text((x + d.textlength(head, font=sub), y), tail, font=sub, fill=AMBER)
 
