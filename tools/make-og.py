@@ -4,7 +4,8 @@
 Adapted from the Pixel Pane site's tools/make-og.py. Mirrors the hero: the app
 icon, wordmark, tagline, mono footer, over the noonlight theme's amber glow. Output
 is 1200x630, rendered at 2x. Needs Pillow and macOS for SF Pro; JetBrains Mono
-is fetched from Google Fonts and cached in tools/.fonts (not committed).
+is fetched from Google Fonts and cached in tools/.fonts (not committed). The word is
+the drawn logo, wordmark.svg, rendered by sips.
 
     python3 tools/make-og.py
 
@@ -15,7 +16,9 @@ index.html: Slack, iMessage and X cache the old artwork against the old URL.
 import math
 import os
 import re
+import subprocess
 import sys
+import tempfile
 import urllib.request
 from PIL import Image, ImageDraw, ImageFont
 
@@ -102,7 +105,7 @@ def build():
 
     d = ImageDraw.Draw(img, "RGBA")
 
-    # The mark, taken straight from Noon's app icon.
+    # The app icon.
     icon_path = os.path.join(HERE, "icon-512.png")
     if not os.path.exists(icon_path):
         sys.exit("missing %s" % icon_path)
@@ -110,11 +113,16 @@ def build():
     icon = Image.open(icon_path).convert("RGBA").resize((side, side), Image.LANCZOS)
     img.paste(icon, (int(w / 2 - side / 2), int(0.245 * h - side / 2)), icon)
 
-    # wordmark
-    tsize = int(0.088 * w)
-    title = sf(tsize, "Semibold")
-    tracked(d, (w / 2, int(0.40 * h)), "Noon", title, PAPER,
-            tracking=-0.035 * tsize)
+    # the word, the logo's own drawing
+    with tempfile.TemporaryDirectory() as folder:
+        png = os.path.join(folder, "wordmark.png")
+        subprocess.run(["sips", "-s", "format", "png", os.path.join(ROOT, "wordmark.svg"), "--out", png],
+                       check=True, capture_output=True)
+        word = Image.open(png).convert("RGBA")
+        word.load()
+    word_h = int(0.082 * w * 0.82)
+    word = word.resize((int(word.width * word_h / word.height), word_h), Image.LANCZOS)
+    img.paste(word, (int(w / 2 - word.width / 2), int(0.44 * h)), word)
 
     # tagline — accent on the product noun
     sub = sf(int(0.028 * w), "Regular")
