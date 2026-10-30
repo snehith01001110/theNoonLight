@@ -12,10 +12,9 @@ Pages from this repository's `main` branch.
   pink and green (`COLORS` in `demos.js`); amber is kept for approvals.
 - `fonts/`: JetBrains Mono, self-hosted (latin subset, SIL OFL in
   `fonts/OFL.txt`), so the page loads nothing from other sites.
-- `icon.png`, `favicon.svg`, `favicon.png`, `favicon.ico`, `logo.svg`,
-  `tools/icon-512.png`: Noon's logo, drawn by `scripts/render-brand.swift` in
-  the app's repository (pass it this folder); its `docs/BRAND.md` is the brand
-  guide. Don't edit them by hand.
+- `icon.png`, `favicon.svg`, `favicon.png`, `favicon.ico`, `logo.svg`: Noon's
+  logo, drawn by `scripts/render-brand.swift` in the app's repository (pass it
+  this folder); its `docs/BRAND.md` is the brand guide. Don't edit them by hand.
 - `grain.png`, `og.png`: images. `og.png` (the link preview) is made by `python3 tools/make-og.py` (Pillow,
   macOS fonts); after regenerating it, bump the `?v=` on `og:image` and
   `twitter:image`.
