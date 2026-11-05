@@ -139,7 +139,6 @@ function start(main) {
   let phase = "build";     // build → done
   let lastY = scrollY;
   const speed = 4;     // fixed: the build is quick and quiet
-  let tour = true;
   let done = 0;
   let last = performance.now();
   let raf = 0;
@@ -267,22 +266,6 @@ function start(main) {
     }
   }
 
-  /* the scroll: the camera follows the build front unless the user scrolled lately */
-  const userScrolled = () => { tour = false; };
-  addEventListener("wheel", userScrolled, { passive: true });
-  addEventListener("touchmove", userScrolled, { passive: true });
-  const userKey = (e) => { if (/^(Arrow|Page|Space|Home|End)/.test(e.code)) userScrolled(); };
-  addEventListener("keydown", userKey);
-  function followBuild(dt) {
-    if (!tour || phase !== "build") return;
-    const front = layers.find((L) => L.state !== "done");
-    if (!front) return;
-    const r = rectOf(front.el);
-    const maxY = document.documentElement.scrollHeight - innerHeight;
-    const want = clamp(r.y - innerHeight * 0.38, 0, maxY);
-    if (want > scrollY + 24) scrollTo(0, scrollY + (want - scrollY) * Math.min(1, dt * 1.4));
-  }
-
   /* one frame */
   function step(dt) {
     const jdt = dt * speed;
@@ -394,7 +377,6 @@ function start(main) {
       else if (f.alpha < 1) { f.alpha -= jdt * 2.2; if (f.alpha <= 0) frames.splice(i, 1); }
     }
     for (let i = measures.length - 1; i >= 0; i--) { measures[i].until -= jdt; if (measures[i].until <= 0) measures.splice(i, 1); }
-    followBuild(dt);
   }
 
   /* drawing */
