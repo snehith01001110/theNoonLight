@@ -1,0 +1,34 @@
+# Cancels a GitHub Pages deployment that is stuck "in progress" (it blocks
+# every later deploy), then asks Pages for a fresh build of main.
+# Runs once when this file lands on main; run it again from the Actions tab
+# with the stuck commit's SHA if it ever happens again.
+name: Unstick Pages deploy
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/unstick-pages.yml]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA of the stuck Pages deployment
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+
+jobs:
+  unstick:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ inputs.sha || '865f9339236ab13c44b95b945680d0a59f21b407' }}
+    steps:
+      - name: Cancel the stuck deployment
+        run: gh api -X POST "repos/${{ github.repository }}/pages/deployments/$SHA/cancel"
+      - name: Request a fresh Pages build of main
+        if: always()
+        run: |
+          sleep 10
+          gh api -X POST "repos/${{ github.repository }}/pages/builds"
