@@ -773,4 +773,16 @@ if (typeof module !== "undefined" && module.exports) {
   mountMap(ticker);
   mountWorkspaces(ticker);
   mountTerminals(ticker);
+  mountSend();
+}
+
+/* On a phone, Noon's download is no use where you are: offer to send the page
+   to your Mac with the system share sheet (AirDrop, Messages, Mail). */
+function mountSend() {
+  const btn = document.querySelector(".hero .send");
+  if (!btn || !navigator.share || !matchMedia("(hover: none) and (pointer: coarse)").matches) return;
+  btn.hidden = false;
+  btn.addEventListener("click", () => {
+    navigator.share({ title: "Noon", text: "Noon: see where all your agents are working. A Mac app.", url: "https://thenoonlight.com/" }).catch(() => {});
+  });
 }

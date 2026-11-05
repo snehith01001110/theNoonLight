@@ -24,11 +24,11 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 <link rel="stylesheet" href="swarm.css?v=5">
 <noscript><style>.sw-hold main.wrap{visibility:visible}</style></noscript>
-<script src="demos.js?v=4" defer></script>
-<script src="swarm.js?v=9" defer></script>
+<script src="demos.js?v=5" defer></script>
+<script src="swarm.js?v=11" defer></script>
 <script>setTimeout(function(){document.body&&document.body.classList.remove("sw-hold")},4000)</script>
 <script type="application/ld+json">
 {
@@ -63,6 +63,10 @@
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Mac
       </a>
+      <button class="btn alt send" type="button" hidden>
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2m0 0L4.5 5.5M8 2l3.5 3.5M3 9v4h10V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Send to my Mac
+      </button>
       <div>
         <p class="fine">Version 0.1.0 · Free · macOS 27 or later on Apple silicon</p>
         <p class="works">Works with <b>Claude Code</b> and <b>Codex</b>, signed in with your own accounts</p>
@@ -127,7 +131,7 @@
       <p>Answer one while the others keep working.</p>
     </div>
     <div class="terms demo" id="terms"></div>
-    <p class="hint below">Click a terminal</p>
+    <p class="hint below"><span class="on-mouse">Click</span><span class="on-touch">Tap</span> a terminal</p>
   </section>
 
   <section class="block" aria-labelledby="h-git">

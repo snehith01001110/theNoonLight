@@ -97,6 +97,9 @@ function wrapChars(el) {
   const spans = [];
   for (const node of nodes) {
     if (!node.nodeValue.trim()) continue;
+    // Words this device doesn't show ("Click" on a phone) aren't typed: their
+    // spans would have no position for the cursor to follow.
+    if (!node.parentElement.getClientRects().length) continue;
     const frag = document.createDocumentFragment();
     for (const ch of node.nodeValue) {
       const s = document.createElement("span");
@@ -487,10 +490,16 @@ function start(main) {
     }
   }
 
+  let ticks = 0;
   function loop(now) {
+    ticks++;
     const dt = Math.min((now - last) / 1000, 0.05);
     last = now;
-    step(dt);
+    // Small fixed steps: at 4× a whole frame is too big a step for the springs
+    // on a slow or power-saving screen (30 frames a second), and cursors would
+    // overshoot for ever instead of arriving.
+    const n = Math.max(1, Math.ceil(dt * 120));
+    for (let i = 0; i < n; i++) step(dt / n);
     draw();
     if (phase === "done" && gone()) { finish(); return; }
     raf = requestAnimationFrame(loop);
@@ -502,12 +511,32 @@ function start(main) {
   }
   // The build is over: take the canvas and its listeners away.
   function finish() {
+    cancelAnimationFrame(raf);
     canvas.remove();
     removeEventListener("resize", resize);
     removeEventListener("wheel", userScrolled);
     removeEventListener("touchmove", userScrolled);
     removeEventListener("keydown", userKey);
   }
+
+  // If the browser hardly animates (some embedded views and power savers give
+  // a page no frames at all), don't leave the page hidden: after a moment on
+  // screen with almost no progress, show it whole. A tab opened in the
+  // background waits until it is shown.
+  function showAll() {
+    for (const a of agents) if (a.job && a.job.spans) { a.job.L.textEl.innerHTML = a.job.saved; a.job.L.textEl.classList.remove("sw-typing"); }
+    for (const L of layers) { L.el.classList.remove("sw-pending", "sw-ghost", "sw-layer"); L.state = "done"; }
+    phase = "done";
+    finish();
+  }
+  function watchdog() {
+    if (document.visibilityState !== "visible") {
+      document.addEventListener("visibilitychange", () => setTimeout(watchdog, 2500), { once: true });
+      return;
+    }
+    if (ticks < 20 && phase === "build") showAll();
+  }
+  setTimeout(watchdog, 2500);
 
   addEventListener("resize", resize);
   resize();
