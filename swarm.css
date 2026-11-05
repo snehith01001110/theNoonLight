@@ -14,6 +14,5 @@
 .sw-ch.on { opacity: 1; animation: sw-key 0.3s var(--ease) both; }
 @keyframes sw-key { from { opacity: 0.15; filter: blur(3px); } }
 
-/* The canvas: cursors, wireframes, rules and measures, over the page. */
+/* The canvas: cursors, wireframes, placeholders and measures, over the page. */
 .sw-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
-.sw-canvas.gone { opacity: 0; transition: opacity 1.2s; }

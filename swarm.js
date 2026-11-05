@@ -6,10 +6,11 @@
    near them, travel to it, drag out a wireframe in their own colour with
    corner handles and a size tag, and fill it in: text is typed out,
    buttons and images get a placeholder first, blocks resolve from a blur. An
-   agent with nothing to build in view waits in a column at the side of the
-   screen, and once the page is built they all wait there. The camera follows the build
-   front until you scroll yourself; the build runs at 4×. With Reduce Motion
-   the page is simply shown. */
+   agent with nothing to build in view fades out where it is, and fades back
+   in when it heads for the next layer; once the page is built they are all
+   gone and the canvas is removed. The camera follows the build front until
+   you scroll yourself; the build runs at 4×. With Reduce Motion the page is
+   simply shown. */
 (() => {
 "use strict";
 
@@ -125,14 +126,10 @@ function start(main) {
 
   let dpr = 1;
   const viewW = () => document.documentElement.clientWidth; // the canvas's width: the viewport less any scrollbar
-  let bounds = { left: 0, right: 0 };                         // the content column, for the parking spots
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
     canvas.width = Math.round(viewW() * dpr);
     canvas.height = Math.round(innerHeight * dpr);
-    const r = main.querySelector(".hero").getBoundingClientRect();
-    bounds = { left: r.left, right: r.right };
-    wake();
   }
 
   // State.
@@ -143,7 +140,6 @@ function start(main) {
   let done = 0;
   let last = performance.now();
   let raf = 0;
-  let sleeping = false;    // the loop stops once the page is built and everyone is parked
   const frames = [];     // wireframes: {x,y,w,h,p,alpha,tag,hold}
   const phs = [];        // placeholders: {x,y,w,h,color,alpha}
   const measures = [];   // red distance guides: {a,b,until}
@@ -170,7 +166,7 @@ function start(main) {
         const a = {
           id: list.length, name: `${NAMES[list.length % 2]} ${list.length + 1}`, color, pack, rank: i,
           leader, x: p.x, y: p.y, vx: 0, vy: 0, ang: 0, alpha: 0,
-          state: "idle", wait: rnd(0.2, 1.4), tx: p.x, ty: p.y, job: null, hist: [], angGoal: 0, alphaGoal: 1,
+          state: "idle", wait: rnd(0.2, 1.4), tx: p.x, ty: p.y, job: null, hist: [], alphaGoal: 1,
         };
         if (!leader) leader = a;
         list.push(a);
@@ -178,19 +174,6 @@ function start(main) {
       pack++;
     }
     return list;
-  }
-  // Where an agent waits: one tidy column in the right margin, every agent in
-  // its own slot (packs stay together, as their ids run on), centred down the
-  // screen, in viewport coordinates. On a narrow screen the margin is thin, so
-  // the column tucks against the edge. A pointer's tip is its position, and
-  // its body hangs right of it, so the column sits a little left of centre.
-  const PARK_GAP = 26;
-  function parkSpot(a) {
-    const W = viewW();
-    const gR = W - bounds.right;
-    const x = gR >= 64 ? W - clamp(gR * 0.5 + 7, 30, 122) : W - 15;
-    const y = innerHeight / 2 + (a.id - (agents.length - 1) / 2) * PARK_GAP;
-    return { x, y };
   }
   function spring(a, tx, ty, k, d, dt) {
     a.vx += ((tx - a.x) * k - a.vx * d) * dt;
@@ -285,7 +268,8 @@ function start(main) {
   const userScrolled = () => { tour = false; };
   addEventListener("wheel", userScrolled, { passive: true });
   addEventListener("touchmove", userScrolled, { passive: true });
-  addEventListener("keydown", (e) => { if (/^(Arrow|Page|Space|Home|End)/.test(e.code)) userScrolled(); });
+  const userKey = (e) => { if (/^(Arrow|Page|Space|Home|End)/.test(e.code)) userScrolled(); };
+  addEventListener("keydown", userKey);
   function followBuild(dt) {
     if (!tour || phase !== "build") return;
     const front = layers.find((L) => L.state !== "done");
@@ -310,47 +294,40 @@ function start(main) {
       for (const h of a.hist) h.y += dy;
     }
     for (const a of agents) {
-      // Fade in on arrival; dim a little while waiting at the side.
+      // Fade in when there is work; fade out where it is when there isn't.
       const lead = a.leader || a;
-      a.alphaGoal = lead.state === "park" && lead.parked ? 0.6 : 1;
-      a.alpha += clamp(a.alphaGoal - a.alpha, -dt * 1.5, dt * 2);
+      a.alphaGoal = lead.state === "rest" ? 0 : 1;
+      a.alpha += clamp(a.alphaGoal - a.alpha, -dt * 3, dt * 4);
 
       if (a.leader) {
-        if (lead.state === "park") {
-          // Waiting: its own slot in the column.
-          const spot = parkSpot(a);
-          spring(a, scrollX + spot.x, scrollY + spot.y, 22, 8, dt);
-          a.angGoal = 0;
+        if (lead.state === "rest") {
+          // Nothing to do: come to a stop while fading out.
+          spring(a, a.x, a.y, 40, 10, dt);
         } else {
           // Moving: trail the leader along its recent path.
           const h = lead.hist;
           const k = Math.min(h.length - 1, 7 * a.rank);
           const p = h.length ? h[h.length - 1 - k] : lead;
           const off = 10 * a.rank;
-          a.angGoal = 0;
           spring(a, p.x - off * 0.6, p.y + off * 0.4, 70, 12, dt);
         }
       } else if (a.state === "idle") {
-        // Just finished (or just arrived): a beat, then the next layer, or the side.
+        // Just finished (or just arrived): a beat, then the next layer, or rest.
         a.wait -= jdt;
         spring(a, a.tx, a.ty, 38, 9, jdt);
         if (a.wait <= 0) {
           const L = phase === "build" ? claim(a) : null;
           if (L) startJob(a, L);
-          else { a.state = "park"; a.parked = false; a.wait = rnd(0.3, 0.7); }
+          else { a.state = "rest"; a.wait = rnd(0.3, 0.7); }
         }
-      } else if (a.state === "park") {
-        // Waiting at the side, fixed to the screen; check for work now and then.
-        const spot = parkSpot(a);
-        const tx = scrollX + spot.x, ty = scrollY + spot.y;
-        spring(a, tx, ty, 22, 8, dt);
-        a.angGoal = 0;
-        if (!a.parked && Math.hypot(tx - a.x, ty - a.y) < 2) a.parked = true;
+      } else if (a.state === "rest") {
+        // Hidden, riding along with the screen; check for work now and then.
+        spring(a, a.x, a.y, 40, 10, dt);
         a.wait -= jdt;
         if (a.wait <= 0 && phase === "build") {
           a.wait = rnd(0.3, 0.7);
           const L = claim(a);
-          if (L) { a.parked = false; startJob(a, L); }
+          if (L) startJob(a, L);
         }
       } else if (a.state === "go") {
         const j = a.job;
@@ -396,10 +373,10 @@ function start(main) {
           if (j.t >= 0.35) finishLayer(a);
         }
       }
-      // Pointers point where they go; at rest, toward the content.
+      // Pointers point where they go.
       {
         const sp = Math.hypot(a.vx, a.vy);
-        let goal = a.state === "park" || lead.state === "park" ? a.angGoal : 0;
+        let goal = 0;
         if (sp > 160) goal = turn(Math.atan2(a.vy, a.vx) + (3 * Math.PI) / 4, 0);
         a.ang += turn(goal, a.ang) * Math.min(1, dt * 10);
         a.ang = turn(a.ang, 0); // keep it in -π..π
@@ -515,28 +492,24 @@ function start(main) {
     last = now;
     step(dt);
     draw();
-    if (phase === "done" && still()) { sleeping = true; return; }
+    if (phase === "done" && gone()) { finish(); return; }
     raf = requestAnimationFrame(loop);
   }
-  // Built, and every cursor parked and at rest: nothing left to draw.
-  function still() {
+  // Built, and every cursor faded out: nothing left to draw.
+  function gone() {
     if (frames.length || phs.length || measures.length) return false;
-    return agents.every((a) => {
-      const lead = a.leader || a;
-      return lead.state === "park" && lead.parked && Math.hypot(a.vx, a.vy) < 0.5 &&
-        Math.abs(a.alpha - a.alphaGoal) < 0.005 && Math.abs(turn(a.angGoal, a.ang)) < 0.005;
-    });
+    return agents.every((a) => a.alpha === 0);
   }
-  // Parked cursors ride along with a scroll, and a resize moves their spots.
-  function wake() {
-    if (!sleeping) return;
-    sleeping = false;
-    last = performance.now();
-    raf = requestAnimationFrame(loop);
+  // The build is over: take the canvas and its listeners away.
+  function finish() {
+    canvas.remove();
+    removeEventListener("resize", resize);
+    removeEventListener("wheel", userScrolled);
+    removeEventListener("touchmove", userScrolled);
+    removeEventListener("keydown", userKey);
   }
 
   addEventListener("resize", resize);
-  addEventListener("scroll", wake, { passive: true });
   resize();
   agents = makeAgents();
   raf = requestAnimationFrame((t) => { last = t; loop(t); });
