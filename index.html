@@ -24,8 +24,12 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="swarm.css?v=4">
+<noscript><style>.sw-hold main.wrap{visibility:visible}</style></noscript>
 <script src="demos.js?v=4" defer></script>
+<script src="swarm.js?v=3" defer></script>
+<script>setTimeout(function(){document.body&&document.body.classList.remove("sw-hold")},4000)</script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -48,21 +52,27 @@
 }
 </script>
 </head>
-<body>
+<body class="sw-hold">
 <main class="wrap">
   <section class="hero">
+    <p class="eye"><b>[00]</b>A Mac app for coding agents</p>
     <h1><svg class="logo" viewBox="0 -8 1134 256" width="1134" height="256" role="img" aria-label="Noon"><title>Noon</title><path d="M20 240V131A111 111 0 0 1 242 131V240M322 120a105 105 0 1 0 210 0a105 105 0 1 0 -210 0M602 120a105 105 0 1 0 210 0a105 105 0 1 0 -210 0M892 240V131A111 111 0 0 1 1114 131V240" fill="none" stroke="#ebdbb2" stroke-width="40"/><circle cx="131" cy="120" r="60" fill="#d8a657"/></svg></h1>
     <p class="sub">Run coding agents side by side. Watch each one move across a live map of your code.</p>
-    <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
-      <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      Download for Mac
-    </a>
-    <p class="fine">Version 0.1.0 · Free · macOS 27 or later on Apple silicon</p>
-    <p class="works">Works with <b>Claude Code</b> and <b>Codex</b>, signed in with your own accounts</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download for Mac
+      </a>
+      <div>
+        <p class="fine">Version 0.1.0 · Free · macOS 27 or later on Apple silicon</p>
+        <p class="works">Works with <b>Claude Code</b> and <b>Codex</b>, signed in with your own accounts</p>
+      </div>
+    </div>
   </section>
 
   <section class="block" aria-labelledby="h-map">
     <div class="head">
+      <p class="eye"><b>[01]</b>Map</p>
       <h2 id="h-map">Every agent on the map</h2>
       <p>Each agent is shown at the file it last touched.</p>
     </div>
@@ -89,6 +99,7 @@
 
   <section class="block" aria-labelledby="h-ws">
     <div class="head">
+      <p class="eye"><b>[02]</b>Workspaces</p>
       <h2 id="h-ws">A workspace per task</h2>
       <p>Each task starts from a fresh checkout of your current commit, on its own branch. Uncommitted edits and ignored files stay behind.</p>
     </div>
@@ -111,6 +122,7 @@
 
   <section class="block" aria-labelledby="h-terms">
     <div class="head">
+      <p class="eye"><b>[03]</b>Terminals</p>
       <h2 id="h-terms">Several agents at once</h2>
       <p>Answer one while the others keep working.</p>
     </div>
@@ -120,6 +132,7 @@
 
   <section class="block" aria-labelledby="h-git">
     <div class="head">
+      <p class="eye"><b>[04]</b>Git</p>
       <h2 id="h-git">Only commits merge</h2>
       <p>Merge adds a merge commit on your branch. Nothing is pushed.</p>
     </div>
@@ -131,6 +144,7 @@
 
   <section class="block" aria-labelledby="h-trust">
     <div class="head">
+      <p class="eye"><b>[05]</b>Trust</p>
       <h2 id="h-trust">Your Mac, your accounts</h2>
       <p>Noon runs on your Mac and starts the agents you already use.</p>
     </div>
@@ -143,7 +157,7 @@
   </section>
 
   <section class="block" aria-labelledby="h-faq">
-    <div class="head"><h2 id="h-faq">Questions</h2></div>
+    <div class="head"><p class="eye"><b>[06]</b>Questions</p><h2 id="h-faq">Questions</h2></div>
     <div class="faq">
       <details>
         <summary>How do I push, or open a pull request?</summary>
@@ -173,7 +187,7 @@
   </section>
 
   <section class="block" aria-labelledby="h-start">
-    <div class="head"><h2 id="h-start">Get started</h2></div>
+    <div class="head"><p class="eye"><b>[07]</b>Start</p><h2 id="h-start">Get started</h2></div>
     <ul class="chips">
       <li>Apple silicon</li><li>macOS 27+</li><li>Claude Code or Codex</li><li>Free</li>
     </ul>

@@ -19,7 +19,11 @@ Pages from this repository's `main` branch.
   macOS fonts); after regenerating it, bump the `?v=` on `og:image` and
   `twitter:image`.
 - `robots.txt`, `sitemap.xml`: for search engines.
-- `atlas/`: a redirect from the old address, `/atlas`, to the home page.
+- `swarm.js`, `swarm.css`: the build-in effect. Agent cursors draw wireframes
+  over the page and fill each layer in, at 4×, following the page's scroll
+  until a visitor scrolls. The page is plain HTML underneath; with Reduce Motion
+  or no JavaScript it is simply shown.
+- `atlas/`, `beta/`: redirects from old addresses to the home page.
 - `404.html`: shown for any other old address.
 
 Downloads are GitHub releases of
@@ -35,6 +39,6 @@ repository [homebrew-noon](https://github.com/snehith01001110/homebrew-noon):
 https://github.com/snehith01001110/homebrew-noon.git tap-split:main && git
 branch -D tap-split`.
 
-Earlier projects that lived here (/universe, /beta, /citizen, /paloma and the
+Earlier projects that lived here (/universe, the old /beta map, /citizen, /paloma and the
 hub page) were taken down on October 27, 2026. They're in the history: the
 tag `archive/before-noon` is the last commit with all of them.

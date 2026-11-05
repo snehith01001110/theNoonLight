@@ -1,0 +1,19 @@
+/* The home page, built in front of you by a swarm of agent cursors.
+   swarm.js hides each of the page's layers, and draws the cursors,
+   wireframes and guides on a canvas over it. The colours are the theme's. */
+
+.sw-hold main.wrap { visibility: hidden; }
+
+/* Layers: hidden until an agent builds them. The pending rule is !important
+   so it beats the page's own opacity rules (terminals at the back are .92). */
+.sw-layer { transition: opacity 0.5s var(--ease), filter 0.5s var(--ease); }
+.sw-pending { opacity: 0 !important; pointer-events: none !important; }
+.sw-ghost { opacity: 0.55 !important; filter: blur(7px); }
+.sw-typing { text-shadow: 0 0 14px rgba(125, 174, 163, 0.35); }
+.sw-ch { opacity: 0; }
+.sw-ch.on { opacity: 1; animation: sw-key 0.3s var(--ease) both; }
+@keyframes sw-key { from { opacity: 0.15; filter: blur(3px); } }
+
+/* The canvas: cursors, wireframes, rules and measures, over the page. */
+.sw-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 20; pointer-events: none; }
+.sw-canvas.gone { opacity: 0; transition: opacity 1.2s; }
