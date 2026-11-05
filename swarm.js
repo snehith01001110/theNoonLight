@@ -8,9 +8,9 @@
    buttons and images get a placeholder first, blocks resolve from a blur. An
    agent with nothing to build in view fades out where it is, and fades back
    in when it heads for the next layer; once the page is built they are all
-   gone and the canvas is removed. The camera follows the build front until
-   you scroll yourself; the build runs at 4×. With Reduce Motion the page is
-   simply shown. */
+   gone and the canvas is removed. The page never scrolls by itself; the
+   logo and tagline are drawn first, and the build runs at 4×. With Reduce
+   Motion the page is simply shown. */
 (() => {
 "use strict";
 
@@ -505,9 +505,6 @@ function start(main) {
     cancelAnimationFrame(raf);
     canvas.remove();
     removeEventListener("resize", resize);
-    removeEventListener("wheel", userScrolled);
-    removeEventListener("touchmove", userScrolled);
-    removeEventListener("keydown", userKey);
   }
 
   // If the browser hardly animates (some embedded views and power savers give
