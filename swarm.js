@@ -41,6 +41,9 @@ const SPEC = [
   ["footer .f-row > *", "text"], ["footer details", "text"], ["footer > p", "text"],
 ];
 
+// Drawn first, before the rest of the page: the Noon logo and the tagline.
+const OPENING = ".hero h1 .logo, .hero .sub";
+
 const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -75,6 +78,7 @@ function collectLayers(main) {
   }
   list.sort((a, b) => (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
   for (const L of list) L.el.swLayer = L;
+  for (const L of list) L.opening = L.el.matches(OPENING);
   for (const L of list) {
     let p = L.el.parentElement;
     while (p && !p.swLayer) p = p.parentElement;
@@ -194,8 +198,12 @@ function start(main) {
     // view is built, the first one above it, so the page fills in behind.
     const top = scrollY - 60, bottom = scrollY + innerHeight + 200;
     let best = null, bestScore = Infinity, above = null;
+    // The logo and the tagline are drawn before anything else: until both are
+    // done, nothing else is claimed.
+    const openingLeft = layers.some((L) => L.opening && L.state !== "done");
     for (const L of layers) {
       if (L.state !== "pending" || !ready(L)) continue;
+      if (openingLeft && !L.opening) continue;
       const r = rectOf(L.el);
       if (r.y > bottom) break;
       if (r.y + r.h < top) { if (!above) { above = L; above.rect = r; } continue; }
