@@ -14,7 +14,7 @@
   const END = 99;      // the last number before ∞
   const FIRST = 340;   // ms the first number stays up
   const FALL = 0.8;    // each step is this much shorter than the last
-  const FLOOR = 9;     // fastest step, ms: the blur
+  const FLOOR = 26;    // fastest step, ms: the blur (its length is about END × FLOOR)
   const ROLL = 70;     // steps longer than this roll; shorter ones just swap
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
@@ -76,7 +76,7 @@
         i = n;
         const step = n + 1 < at.length ? at[n + 1] - at[n] : FLOOR;
         // Blur grows with speed: none at the start, most when it's a smear.
-        box.style.setProperty("--blur", Math.max(0, Math.min(1, (110 - step) / 90)).toFixed(3));
+        box.style.setProperty("--blur", Math.max(0, Math.min(1, (130 - step) / 95)).toFixed(3));
         const text = String(START + n);
         if (step > ROLL) swapIn(box, digit(text), Math.min(300, step * 0.85));
         else {
