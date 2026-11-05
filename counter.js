@@ -62,11 +62,21 @@
       const t = now - t0;
 
       if (t >= atInf) {
-        box.style.setProperty("--blur", "0");
+        // The last blurred number burns out where it is; the ∞ arrives over it.
+        for (const old of box.querySelectorAll(":scope > .d, :scope > svg")) {
+          if (!old.classList.contains("d") || old.classList.contains("out")) { old.remove(); continue; }
+          old.classList.remove("in");
+          old.style.animationDuration = "";
+          old.classList.add("melt");
+          old.addEventListener("animationend", () => old.remove(), { once: true });
+        }
         const tpl = document.createElement("template");
         tpl.innerHTML = infMarkup;
-        swapIn(box, tpl.content.firstElementChild, 260);
+        const inf = tpl.content.firstElementChild;
+        box.appendChild(inf);
+        box.style.width = inf.getBoundingClientRect().width + "px";
         box.classList.add("landed");
+        setTimeout(() => box.style.setProperty("--blur", "0"), 550);
         return;
       }
 
