@@ -2,12 +2,14 @@
 
    The page is plain HTML (so search engines and no-JS visitors get it whole);
    this script marks every visible piece as a layer and hides it. Agents, each
-   a cursor in one of the theme's colours, wander the viewport in small packs,
-   then claim a layer near them, travel to it, drag out a wireframe in their
-   own colour with corner handles and a size tag, and fill it in: text is
-   typed with an I-beam, buttons and images get a placeholder first, blocks
-   resolve from a blur. The camera follows the build front until you scroll
-   yourself; the build runs at 4×. With Reduce Motion the page is simply shown. */
+   a cursor in one of the theme's colours, arrive in small packs, claim a layer
+   near them, travel to it, drag out a wireframe in their own colour with
+   corner handles and a size tag, and fill it in: text is typed out,
+   buttons and images get a placeholder first, blocks resolve from a blur. An
+   agent with nothing to build in view waits in a column at the side of the
+   screen, and once the page is built they all wait there. The camera follows the build
+   front until you scroll yourself; the build runs at 4×. With Reduce Motion
+   the page is simply shown. */
 (() => {
 "use strict";
 
@@ -42,7 +44,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-const lerp = (a, b, t) => a + (b - a) * t;
+const turn = (to, from) => Math.atan2(Math.sin(to - from), Math.cos(to - from)); // the short way round, in -π..π
 
 /* ── boot ────────────────────────────────────────────────────────── */
 
@@ -122,23 +124,26 @@ function start(main) {
   document.body.appendChild(canvas);
 
   let dpr = 1;
+  const viewW = () => document.documentElement.clientWidth; // the canvas's width: the viewport less any scrollbar
+  let bounds = { left: 0, right: 0 };                         // the content column, for the parking spots
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
-    canvas.width = Math.round(innerWidth * dpr);
+    canvas.width = Math.round(viewW() * dpr);
     canvas.height = Math.round(innerHeight * dpr);
+    const r = main.querySelector(".hero").getBoundingClientRect();
+    bounds = { left: r.left, right: r.right };
+    wake();
   }
-  resize();
-  addEventListener("resize", resize);
 
   // State.
-  let phase = "build";     // build → done → off
+  let phase = "build";     // build → done
   let lastY = scrollY;
   const speed = 4;     // fixed: the build is quick and quiet
   let tour = true;
   let done = 0;
-  let doneAt = 0;
   let last = performance.now();
   let raf = 0;
+  let sleeping = false;    // the loop stops once the page is built and everyone is parked
   const frames = [];     // wireframes: {x,y,w,h,p,alpha,tag,hold}
   const phs = [];        // placeholders: {x,y,w,h,color,alpha}
   const measures = [];   // red distance guides: {a,b,until}
@@ -159,14 +164,13 @@ function start(main) {
     while (list.length < n) {
       const size = Math.min(pick([1, 1, 2, 2, 3, 4]), n - list.length);
       const color = PALETTE[pack % PALETTE.length];
-      const tool = Math.random() < 0.62 ? "arrow" : Math.random() < 0.6 ? "cross" : "ibeam";
       let leader = null;
       for (let i = 0; i < size; i++) {
         const p = spawnPoint();
         const a = {
-          id: list.length, name: `${NAMES[list.length % 2]} ${list.length + 1}`, color, tool, pack, rank: i,
+          id: list.length, name: `${NAMES[list.length % 2]} ${list.length + 1}`, color, pack, rank: i,
           leader, x: p.x, y: p.y, vx: 0, vy: 0, ang: 0, alpha: 0,
-          state: "wander", wait: rnd(0.2, 1.4), tx: p.x, ty: p.y, job: null, hist: [], leaving: false,
+          state: "idle", wait: rnd(0.2, 1.4), tx: p.x, ty: p.y, job: null, hist: [], angGoal: 0, alphaGoal: 1,
         };
         if (!leader) leader = a;
         list.push(a);
@@ -175,12 +179,18 @@ function start(main) {
     }
     return list;
   }
-  function wanderTarget(a) {
-    const near = Math.random() < 0.7;
-    const x0 = scrollX + 20, x1 = scrollX + innerWidth - 20;
-    const y0 = scrollY + 20, y1 = scrollY + innerHeight - 60;
-    if (near) { a.tx = clamp(a.x + rnd(-170, 170), x0, x1); a.ty = clamp(a.y + rnd(-130, 130), y0, y1); }
-    else { a.tx = rnd(x0, x1); a.ty = rnd(y0, y1); }
+  // Where an agent waits: one tidy column in the right margin, every agent in
+  // its own slot (packs stay together, as their ids run on), centred down the
+  // screen, in viewport coordinates. On a narrow screen the margin is thin, so
+  // the column tucks against the edge. A pointer's tip is its position, and
+  // its body hangs right of it, so the column sits a little left of centre.
+  const PARK_GAP = 26;
+  function parkSpot(a) {
+    const W = viewW();
+    const gR = W - bounds.right;
+    const x = gR >= 64 ? W - clamp(gR * 0.5 + 7, 30, 122) : W - 15;
+    const y = innerHeight / 2 + (a.id - (agents.length - 1) / 2) * PARK_GAP;
+    return { x, y };
   }
   function spring(a, tx, ty, k, d, dt) {
     a.vx += ((tx - a.x) * k - a.vx * d) * dt;
@@ -218,8 +228,6 @@ function start(main) {
     frames.push(frame);
     a.job = { L, r, frame, t: 0, dur: clamp(Math.hypot(r.w, r.h) / 1100, 0.22, 0.85), ph: null, spans: null, i: 0, rate: 0 };
     a.state = "go";
-    a.tool0 = a.tool;
-    a.tool = L.kind === "text" ? "ibeam" : "cross";
   }
   function finishLayer(a) {
     const { L, frame } = a.job;
@@ -247,11 +255,10 @@ function start(main) {
     recent.unshift(L);
     if (recent.length > 6) recent.pop();
     a.job = null;
-    a.tool = a.tool0;
-    a.state = "wander";
-    a.wait = rnd(0.15, 0.9);
-    wanderTarget(a);
-    if (done === layers.length) { phase = "done"; doneAt = 0; }
+    a.state = "idle";
+    a.wait = rnd(0.1, 0.5);
+    a.tx = a.x; a.ty = a.y;
+    if (done === layers.length) phase = "done";
   }
   function beginFill(a) {
     const j = a.job, L = j.L, el = L.el;
@@ -302,36 +309,49 @@ function start(main) {
       a.y += dy; a.ty += dy;
       for (const h of a.hist) h.y += dy;
     }
-    if (phase === "done") {
-      doneAt += dt;
-      if (doneAt > 7) for (const a of agents) a.leaving = true;
-      if (doneAt > 7 && agents.every((a) => a.alpha <= 0.02)) canvas.classList.add("gone");
-    }
-
     for (const a of agents) {
-      // Fade in on arrival, out on leaving.
-      if (a.leaving) a.alpha = Math.max(0, a.alpha - dt * 0.8);
-      else a.alpha = Math.min(1, a.alpha + dt * 2);
+      // Fade in on arrival; dim a little while waiting at the side.
+      const lead = a.leader || a;
+      a.alphaGoal = lead.state === "park" && lead.parked ? 0.6 : 1;
+      a.alpha += clamp(a.alphaGoal - a.alpha, -dt * 1.5, dt * 2);
 
       if (a.leader) {
-        // Followers trail their leader along its recent path.
-        const h = a.leader.hist;
-        const k = Math.min(h.length - 1, 7 * a.rank);
-        const p = h.length ? h[h.length - 1 - k] : a.leader;
-        const off = 10 * a.rank;
-        spring(a, p.x - off * 0.6, p.y + off * 0.4, 70, 12, dt);
-        continue;
-      }
-      if (a.leaving) {
-        spring(a, a.x < scrollX + innerWidth / 2 ? scrollX - 120 : scrollX + innerWidth + 120, a.y, 20, 7, dt);
-      } else if (a.state === "wander") {
+        if (lead.state === "park") {
+          // Waiting: its own slot in the column.
+          const spot = parkSpot(a);
+          spring(a, scrollX + spot.x, scrollY + spot.y, 22, 8, dt);
+          a.angGoal = 0;
+        } else {
+          // Moving: trail the leader along its recent path.
+          const h = lead.hist;
+          const k = Math.min(h.length - 1, 7 * a.rank);
+          const p = h.length ? h[h.length - 1 - k] : lead;
+          const off = 10 * a.rank;
+          a.angGoal = 0;
+          spring(a, p.x - off * 0.6, p.y + off * 0.4, 70, 12, dt);
+        }
+      } else if (a.state === "idle") {
+        // Just finished (or just arrived): a beat, then the next layer, or the side.
         a.wait -= jdt;
+        spring(a, a.tx, a.ty, 38, 9, jdt);
         if (a.wait <= 0) {
           const L = phase === "build" ? claim(a) : null;
           if (L) startJob(a, L);
-          else { wanderTarget(a); a.wait = rnd(0.5, 2.2); }
+          else { a.state = "park"; a.parked = false; a.wait = rnd(0.3, 0.7); }
         }
-        spring(a, a.tx, a.ty, 38, 9, jdt);
+      } else if (a.state === "park") {
+        // Waiting at the side, fixed to the screen; check for work now and then.
+        const spot = parkSpot(a);
+        const tx = scrollX + spot.x, ty = scrollY + spot.y;
+        spring(a, tx, ty, 22, 8, dt);
+        a.angGoal = 0;
+        if (!a.parked && Math.hypot(tx - a.x, ty - a.y) < 2) a.parked = true;
+        a.wait -= jdt;
+        if (a.wait <= 0 && phase === "build") {
+          a.wait = rnd(0.3, 0.7);
+          const L = claim(a);
+          if (L) { a.parked = false; startJob(a, L); }
+        }
       } else if (a.state === "go") {
         const j = a.job;
         spring(a, j.r.x, j.r.y, 110, 15, jdt);
@@ -376,17 +396,13 @@ function start(main) {
           if (j.t >= 0.35) finishLayer(a);
         }
       }
-      // Arrows point where they go.
-      if (a.tool === "arrow") {
+      // Pointers point where they go; at rest, toward the content.
+      {
         const sp = Math.hypot(a.vx, a.vy);
-        let goal = 0;
-        if (sp > 160) {
-          goal = Math.atan2(a.vy, a.vx) + (3 * Math.PI) / 4;
-          goal = Math.atan2(Math.sin(goal), Math.cos(goal));
-        }
-        let d = goal - a.ang;
-        d = Math.atan2(Math.sin(d), Math.cos(d));
-        a.ang += d * Math.min(1, dt * 10);
+        let goal = a.state === "park" || lead.state === "park" ? a.angGoal : 0;
+        if (sp > 160) goal = turn(Math.atan2(a.vy, a.vx) + (3 * Math.PI) / 4, 0);
+        a.ang += turn(goal, a.ang) * Math.min(1, dt * 10);
+        a.ang = turn(a.ang, 0); // keep it in -π..π
       }
       a.hist.push({ x: a.x, y: a.y });
       if (a.hist.length > 40) a.hist.shift();
@@ -421,35 +437,6 @@ function start(main) {
     ctx.fill();
     ctx.shadowColor = "transparent";
     ctx.stroke();
-    ctx.restore();
-  }
-  function drawCross(x, y, color, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(x, y);
-    ctx.lineCap = "round";
-    for (const [w, c] of [[4, "rgba(11,10,8,0.85)"], [2, color]]) {
-      ctx.strokeStyle = c; ctx.lineWidth = w;
-      ctx.beginPath();
-      ctx.moveTo(-8, 0); ctx.lineTo(-2.5, 0); ctx.moveTo(2.5, 0); ctx.lineTo(8, 0);
-      ctx.moveTo(0, -8); ctx.lineTo(0, -2.5); ctx.moveTo(0, 2.5); ctx.lineTo(0, 8);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-  function drawIbeam(x, y, color, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(x, y);
-    ctx.lineCap = "round";
-    for (const [w, c] of [[3.6, "rgba(11,10,8,0.85)"], [1.6, color]]) {
-      ctx.strokeStyle = c; ctx.lineWidth = w;
-      ctx.beginPath();
-      ctx.moveTo(0, -8); ctx.lineTo(0, 8);
-      ctx.moveTo(-3, -8.5); ctx.lineTo(3, -8.5);
-      ctx.moveTo(-3, 8.5); ctx.lineTo(3, 8.5);
-      ctx.stroke();
-    }
     ctx.restore();
   }
   function chip(x, y, text, bg, fg, alpha) {
@@ -519,9 +506,7 @@ function start(main) {
     }
     for (const a of agents) {
       if (a.alpha <= 0 || !onScreen(a.x, a.y, 1, 1)) continue;
-      if (a.tool === "cross") drawCross(a.x, a.y, a.color, a.alpha);
-      else if (a.tool === "ibeam") drawIbeam(a.x, a.y, a.color, a.alpha);
-      else drawArrow(a.x, a.y, a.ang, a.color, a.alpha);
+      drawArrow(a.x, a.y, a.ang, a.color, a.alpha);
     }
   }
 
@@ -530,9 +515,29 @@ function start(main) {
     last = now;
     step(dt);
     draw();
+    if (phase === "done" && still()) { sleeping = true; return; }
+    raf = requestAnimationFrame(loop);
+  }
+  // Built, and every cursor parked and at rest: nothing left to draw.
+  function still() {
+    if (frames.length || phs.length || measures.length) return false;
+    return agents.every((a) => {
+      const lead = a.leader || a;
+      return lead.state === "park" && lead.parked && Math.hypot(a.vx, a.vy) < 0.5 &&
+        Math.abs(a.alpha - a.alphaGoal) < 0.005 && Math.abs(turn(a.angGoal, a.ang)) < 0.005;
+    });
+  }
+  // Parked cursors ride along with a scroll, and a resize moves their spots.
+  function wake() {
+    if (!sleeping) return;
+    sleeping = false;
+    last = performance.now();
     raf = requestAnimationFrame(loop);
   }
 
+  addEventListener("resize", resize);
+  addEventListener("scroll", wake, { passive: true });
+  resize();
   agents = makeAgents();
   raf = requestAnimationFrame((t) => { last = t; loop(t); });
 }
