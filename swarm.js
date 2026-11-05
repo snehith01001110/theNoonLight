@@ -233,6 +233,7 @@ function start(main) {
     setTimeout(() => el.classList.remove("sw-layer"), 700);
     L.state = "done";
     done++;
+    el.dispatchEvent(new CustomEvent("sw:built", { bubbles: true }));
     frame.hold = rnd(0.5, 1.4);
     frame.tag = false;
     // A red distance guide to a neighbour, now and then.
