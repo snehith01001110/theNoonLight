@@ -1,9 +1,10 @@
 /* Noon's page, built in front of you by a swarm of agent cursors.
 
    The page is plain HTML (so search engines and no-JS visitors get it whole);
-   this script marks every visible piece as a layer and hides it. Agents, each a cursor in one of the theme's colours, wander the
-   viewport in small packs, then claim a layer near them, travel to it, drag
-   out a wireframe with corner handles and a size tag, and fill it in: text is
+   this script marks every visible piece as a layer and hides it. Agents, each
+   a cursor in one of the theme's colours, wander the viewport in small packs,
+   then claim a layer near them, travel to it, drag out a wireframe in their
+   own colour with corner handles and a size tag, and fill it in: text is
    typed with an I-beam, buttons and images get a placeholder first, blocks
    resolve from a blur. The camera follows the build front until you scroll
    yourself; the build runs at 4×. With Reduce Motion the page is simply shown. */
@@ -11,7 +12,6 @@
 "use strict";
 
 const PALETTE = ["#7daea3", "#d3869b", "#a9b665", "#d8a657", "#e78a4e", "#ebdbb2"]; // aqua, pink, green, amber, orange, cream
-const GUIDE = "#7daea3";   // wireframes: the theme's aqua
 const RED = "#ea6962";     // measures: the theme's red
 const INK = "#0f0e0c";
 const NAMES = ["Claude Code", "Codex"];
@@ -214,7 +214,7 @@ function start(main) {
   }
   function startJob(a, L) {
     const r = L.rect;
-    const frame = { x: r.x, y: r.y, w: r.w, h: r.h, p: 0, alpha: 1, tag: true, hold: 0 };
+    const frame = { x: r.x, y: r.y, w: r.w, h: r.h, p: 0, alpha: 1, tag: true, hold: 0, color: a.color }; // in the colour of the agent drawing it
     frames.push(frame);
     a.job = { L, r, frame, t: 0, dur: clamp(Math.hypot(r.w, r.h) / 1100, 0.22, 0.85), ph: null, spans: null, i: 0, rate: 0 };
     a.state = "go";
@@ -488,9 +488,11 @@ function start(main) {
       const w = f.w * f.p, h = f.h * f.p;
       ctx.save();
       ctx.globalAlpha = f.alpha;
-      ctx.fillStyle = "rgba(125,174,163,0.045)";
+      ctx.fillStyle = f.color;
+      ctx.globalAlpha = f.alpha * 0.05;
       ctx.fillRect(f.x, f.y, w, h);
-      ctx.strokeStyle = GUIDE;
+      ctx.globalAlpha = f.alpha;
+      ctx.strokeStyle = f.color;
       ctx.lineWidth = 1;
       ctx.strokeRect(f.x + 0.5, f.y + 0.5, Math.max(0, w - 1), Math.max(0, h - 1));
       ctx.fillStyle = INK;
@@ -498,7 +500,7 @@ function start(main) {
         ctx.fillRect(hx - 3, hy - 3, 6, 6);
         ctx.strokeRect(hx - 2.5, hy - 2.5, 5, 5);
       }
-      if (f.tag) chip(f.x, f.y + h + 6, `${Math.round(w)} × ${Math.round(h)}`, GUIDE, INK, 1);
+      if (f.tag) chip(f.x, f.y + h + 6, `${Math.round(w)} × ${Math.round(h)}`, f.color, INK, 1);
       ctx.restore();
     }
     for (const m of measures) {
