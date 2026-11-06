@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en">
+<!-- Set data-downloads-enabled to "true" to restore public downloads. -->
+<html lang="en" data-downloads-enabled="false">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -24,7 +25,7 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml" sizes="any">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="preload" href="fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <link rel="stylesheet" href="swarm.css?v=5">
 <noscript><style>.sw-hold main.wrap{visibility:visible}</style></noscript>
 <script src="demos.js?v=5" defer></script>
@@ -45,7 +46,6 @@
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "macOS 27 or later, Apple silicon",
       "softwareVersion": "0.1.0",
-      "downloadUrl": "https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip",
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
       "author": { "@type": "Person", "name": "Snehith Nayak" }
     }
@@ -60,16 +60,21 @@
     <h1><svg class="logo" viewBox="0 -8 1134 256" width="1134" height="256" role="img" aria-label="Noon"><title>Noon</title><path d="M20 240V131A111 111 0 0 1 242 131V240M322 120a105 105 0 1 0 210 0a105 105 0 1 0 -210 0M602 120a105 105 0 1 0 210 0a105 105 0 1 0 -210 0M892 240V131A111 111 0 0 1 1114 131V240" fill="none" stroke="#ebdbb2" stroke-width="40"/><circle cx="131" cy="120" r="60" fill="#d8a657"/></svg></h1>
     <p class="sub">Run <span class="count"><svg class="inf" viewBox="0 0 100 50" role="img" aria-label="unlimited"><path class="base" pathLength="1" d="M50 25C62 10 90 6 90 25S62 40 50 25 10 6 10 25 38 40 50 25"/><path class="glint" pathLength="1" d="M50 25C62 10 90 6 90 25S62 40 50 25 10 6 10 25 38 40 50 25"/></svg></span> agents without breaking your codebase.</p>
     <div class="cta">
-      <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
+      <a class="btn" data-beta-only href="mailto:snehithn5@gmail.com?subject=Noon%20beta%20access">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="m2.5 4 5.5 4 5.5-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Contact for beta
+      </a>
+      <a class="btn" data-download-only href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Mac
       </a>
-      <button class="btn alt send" type="button" hidden>
+      <button class="btn alt send" data-download-only type="button" hidden>
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 10V2m0 0L4.5 5.5M8 2l3.5 3.5M3 9v4h10V9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Send to my Mac
       </button>
       <div>
-        <p class="fine">Version 0.1.0 · Free · macOS 27 or later on Apple silicon</p>
+        <p class="fine" data-beta-only>Private beta · macOS 27 or later on Apple silicon</p>
+        <p class="fine" data-download-only>Version 0.1.0 · Free · macOS 27 or later on Apple silicon</p>
         <p class="works">Works with <b>Claude Code</b> and <b>Codex</b>, signed in with your own accounts</p>
       </div>
     </div>
@@ -156,7 +161,7 @@
     <ul class="facts">
       <li><b>Your own agents</b>Noon starts the Claude Code or Codex you've installed and signed in to. It never signs in for you, and the agents talk to their providers directly.</li>
       <li><b>No sign-up, no analytics</b>Noon has no account and collects no usage data. Your code goes only where your agents send it.</li>
-      <li><b>Notarized by Apple</b>Each download is signed with a Developer ID and notarized. Its SHA-256 is listed at the bottom of this page.</li>
+      <li><b>Notarized by Apple</b>Noon is signed with a Developer ID and notarized.<span data-download-only> Its SHA-256 is listed at the bottom of this page.</span></li>
       <li><b>Nothing is pushed</b>Merge makes a merge commit on your Mac. When and where to push is up to you.</li>
     </ul>
   </section>
@@ -196,28 +201,33 @@
     <ul class="chips">
       <li>Apple silicon</li><li>macOS 27+</li><li>Claude Code or Codex</li><li>Free</li>
     </ul>
-    <ol class="steps">
+    <p class="fine" data-beta-only>Noon is in private beta. Get in touch to request access.</p>
+    <ol class="steps" data-download-only>
       <li>Download Noon and open the ZIP.</li>
       <li>Move Noon to your Applications folder, then open it.</li>
       <li>Add a Git repository and start a task.</li>
     </ol>
     <div class="center">
-      <a class="btn" href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
+      <a class="btn" data-beta-only href="mailto:snehithn5@gmail.com?subject=Noon%20beta%20access">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="m2.5 4 5.5 4 5.5-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Contact for beta
+      </a>
+      <a class="btn" data-download-only href="https://github.com/snehith01001110/noon-releases/releases/latest/download/Noon.zip">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download for Mac
       </a>
-      <p class="fine brew">or with Homebrew: <code>brew install --cask snehith01001110/noon/noon</code></p>
+      <p class="fine brew" data-download-only>or with Homebrew: <code>brew install --cask snehith01001110/noon/noon</code></p>
     </div>
   </section>
 
   <footer>
     <div class="f-row">
       <a href="mailto:snehithn5@gmail.com">snehithn5@gmail.com</a>
-      <a href="https://github.com/snehith01001110/noon-releases/releases">Release notes</a>
+      <a data-download-only href="https://github.com/snehith01001110/noon-releases/releases">Release notes</a>
       <a href="https://github.com/snehith01001110/noon-releases/blob/main/LICENSE">License</a>
       <span>© 2026 Snehith Nayak</span>
     </div>
-    <details>
+    <details data-download-only>
       <summary>SHA-256 · version 0.1.0</summary>
       <code>41a325200b3abd98f35151c03f8c47ce5e8f0405b63ac24eaddbfa1cc9523121</code>
     </details>

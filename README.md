@@ -26,9 +26,16 @@ Pages from this repository's `main` branch.
 - `atlas/`, `beta/`: redirects from old addresses to the home page.
 - `404.html`: shown for any other old address.
 
+The site currently offers private beta access: both **Contact for beta**
+buttons email `snehithn5@gmail.com` with the subject “Noon beta access”.
+To restore public downloads, set `data-downloads-enabled="true"` on the
+`<html>` element in `index.html`. This single switch restores the download
+buttons, version, installation steps, Homebrew command, release notes and
+checksum, and hides the beta messaging. It works without JavaScript.
 Downloads are GitHub releases of
-[noon-releases](https://github.com/snehith01001110/noon-releases); the page's
-buttons point to the latest one.
+[noon-releases](https://github.com/snehith01001110/noon-releases); the restored
+buttons point to the latest one. This controls the website's presentation;
+existing GitHub releases retain their own access settings.
 
 **For a new release,** update the version and SHA-256 in `index.html`: the
 line under the hero button, the footer's checksum, and `softwareVersion` in

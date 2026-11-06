@@ -51,6 +51,9 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+/* Public downloads are opt-in; this also works with JavaScript disabled. */
+html:not([data-downloads-enabled="true"]) [data-download-only],
+html[data-downloads-enabled="true"] [data-beta-only] { display: none !important; }
 html { background: var(--edge); color-scheme: dark; }
 body {
   margin: 0;
