@@ -44,6 +44,12 @@ repository [homebrew-noon](https://github.com/snehith01001110/homebrew-noon):
 https://github.com/snehith01001110/homebrew-noon.git tap-split:main && git
 branch -D tap-split`.
 
+Check that the split is a fast-forward from the tap's current `main` before
+pushing. If the tap has advanced independently, copy the same cask into a
+temporary checkout of the tap and commit/push it on that history instead;
+never force the generated subtree over independent tap commits. Verify that
+the two cask files are identical and name the published ZIP's exact checksum.
+
 Earlier projects that lived here (/universe, the old /beta map, /citizen, /paloma and the
 hub page) were taken down on October 27, 2026. They're in the history: the
 tag `archive/before-noon` is the last commit with all of them.
