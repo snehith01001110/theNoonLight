@@ -171,7 +171,13 @@
     <div class="faq">
       <details>
         <summary>How do I push, or open a pull request?</summary>
-        <p>With your usual Git tools. Noon never pushes. Merge adds a merge commit to your project's branch on your Mac, with only the task's commits in it, and runs your repository's Git hooks as <code>git merge</code> would.</p>
+        <p>With your usual Git tools. Noon never pushes. Merge adds a merge commit to your project's branch on the computer that holds it, with only the task's commits in it, and runs your repository's Git hooks as <code>git merge</code> would.</p>
+      </details>
+      <details>
+        <summary>Can I add a folder that does not use Git?</summary>
+        <p>Yes, on your Mac. Add your project folder and Noon offers to set up version control. Review the files, exclusions and Git identity, then choose Set Up and Add to create the first commit. Setup stays on that computer; no Git remote is added and nothing is pushed.</p>
+        <p>The latest development build adds this flow for Linux folders over SSH too; it will ship in the next release. The current 0.4.0 download requires an existing Git repository in its SSH picker.</p>
+        <p>Choose a project folder, not an entire home folder, disk or protected system/account folder. Git and read/write access are required, and setup refuses folders containing more than 1,000,000 files and folders.</p>
       </details>
       <details>
         <summary>Which agents does Noon work with?</summary>
@@ -205,7 +211,7 @@
     <ol class="steps" data-download-only>
       <li>Download Noon and open the ZIP.</li>
       <li>Move Noon to your Applications folder, then open it.</li>
-      <li>Add a Git repository and start a task.</li>
+      <li>Add your project folder, review version-control setup if needed, and start a task.</li>
     </ol>
     <div class="center">
       <a class="btn" data-beta-only href="mailto:snehithn5@gmail.com?subject=Noon%20beta%20access">
