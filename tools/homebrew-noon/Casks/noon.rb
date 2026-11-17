@@ -1,6 +1,6 @@
 cask "noon" do
-  version "0.4.0"
-  sha256 "a3034f04914216e17929fb89f2fb0ba79034ef4b53efc681aef1946b9cdf1d8f"
+  version "0.4.1"
+  sha256 "1f32da43ffd8431538685a2f351ce9e3ec421d0e6b8f8116104e1152d0e2c8b8"
 
   url "https://github.com/snehith01001110/noon-releases/releases/download/v#{version}/Noon.zip"
   name "Noon"
