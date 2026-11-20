@@ -740,3 +740,5 @@ a, button, summary, .task, .term { -webkit-tap-highlight-color: transparent; }
 /* PL27: the launch page */
 .hero .sub { margin-bottom: 18px; }
 .hero .lede { max-width: 38rem; margin: 0 0 32px; color: var(--muted, #a89984); font-size: 1.05rem; line-height: 1.5; }
+.fine a.notes { color: var(--amber); text-decoration: underline; text-decoration-color: rgba(216, 166, 87, .45); text-underline-offset: 3px; }
+.fine a.notes:hover, .fine a.notes:focus-visible { color: var(--bright); text-decoration-color: currentColor; }
