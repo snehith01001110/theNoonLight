@@ -1,0 +1,90 @@
+<!doctype html>
+<!-- A post: copy to blog/<slug>/index.html and fill every placeholder in double braces. README.md, "Writing a post". -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0e0c">
+<meta name="color-scheme" content="dark">
+<title>{{TITLE}} · Noon</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="https://thenoonlight.com/blog/{{SLUG}}/">
+<meta property="og:site_name" content="Noon">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://thenoonlight.com/blog/{{SLUG}}/">
+<meta property="og:image" content="https://thenoonlight.com/blog/{{SLUG}}/og.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="article:published_time" content="{{DATE}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<meta name="twitter:image" content="https://thenoonlight.com/blog/{{SLUG}}/og.png?v=1">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="64x64">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="alternate" type="application/atom+xml" title="Noon: Design notes" href="/blog/feed.xml">
+<link rel="stylesheet" href="/style.css?v=12">
+<link rel="stylesheet" href="/blog/blog.css?v=1">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{{TITLE}}",
+  "description": "{{DESCRIPTION}}",
+  "datePublished": "{{DATE}}",
+  "dateModified": "{{DATE}}",
+  "author": { "@type": "Person", "name": "Snehith Nayak" },
+  "publisher": { "@type": "Organization", "name": "Noon", "url": "https://thenoonlight.com/" },
+  "image": "https://thenoonlight.com/blog/{{SLUG}}/og.png",
+  "url": "https://thenoonlight.com/blog/{{SLUG}}/",
+  "isPartOf": { "@type": "Blog", "name": "Design notes", "url": "https://thenoonlight.com/blog/" }
+}
+</script>
+</head>
+<body>
+<div class="wrap blog">
+  <header class="blog-head">
+    <a class="home" href="/"><img src="/logo.svg" alt="Noon" width="97" height="22"></a>
+    <nav><a href="/blog/">Blog</a><a href="/">Download</a></nav>
+  </header>
+
+  <main>
+    <article>
+      <p class="label">[{{NUMBER}}] Design notes</p>
+      <h1>{{TITLE}}</h1>
+      <p class="standfirst">{{STANDFIRST}}</p>
+      <p class="byline"><span>Snehith Nayak</span><span><time datetime="{{DATE}}">{{DATE_TEXT}}</time></span><span>{{MINUTES}} min read</span></p>
+
+      <div class="prose">
+{{ARTICLE}}
+        <h2 id="references">References</h2>
+        <ol class="refs">
+{{REFERENCES}}
+        </ol>
+      </div>
+    </article>
+
+    <nav class="post-nav" aria-label="More posts">
+      {{PREVIOUS}}
+      {{NEXT}}
+    </nav>
+    <p class="post-cta">Noon runs Claude Code and Codex side by side on your Mac. <a href="/">Download it</a>.</p>
+  </main>
+
+  <footer>
+    <div class="f-row">
+      <a href="mailto:snehithn5@gmail.com">snehithn5@gmail.com</a>
+      <a href="https://github.com/snehith01001110/noon-releases/issues">Issues</a>
+      <a href="/blog/">Blog</a>
+      <a href="/blog/feed.xml">Feed</a>
+      <a href="https://github.com/snehith01001110/noon-releases/blob/main/LICENSE">License</a>
+      <span>© 2026 Snehith Nayak</span>
+    </div>
+    <p>This page sets no cookies, runs no analytics and loads nothing from other sites.</p>
+  </footer>
+</div>
+</body>
+</html>

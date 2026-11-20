@@ -24,6 +24,8 @@ Pages from this repository's `main` branch.
   over the page and fill each layer in, at 4×, following the page's scroll
   until a visitor scrolls. The page is plain HTML underneath; with Reduce Motion
   or no JavaScript it is simply shown.
+- `blog/`: the blog, "Design notes" (below). `blog/blog.css` is its reading
+  layout on top of `style.css`'s tokens; `blog/feed.xml` is its Atom feed.
 - `atlas/`, `beta/`: redirects from old addresses to the home page.
 - `404.html`: shown for any other old address.
 
@@ -54,3 +56,23 @@ the two cask files are identical and name the published ZIP's exact checksum.
 Earlier projects that lived here (/universe, the old /beta map, /citizen, /paloma and the
 hub page) were taken down on October 27, 2026. They're in the history: the
 tag `archive/before-noon` is the last commit with all of them.
+
+## Writing a post
+
+A post is a folder, `blog/<slug>/`, holding `index.html` and `og.png`. No
+build step; every page loads only this site's files.
+
+1. Copy `tools/post-template.html` to `blog/<slug>/index.html` and fill every
+   `{{…}}`: the next number (`[02]`, …, two digits), title, description,
+   standfirst, slug, date (`2026-11-20` and "November 20, 2026"), minutes
+   (words ÷ 230), the article (each `h2` with an `id` and an
+   `<a class="anchor" href="#id">#</a>`), the references, and the previous and
+   next links (also add a "next" link to the post before it).
+   Figures are inline SVG with `role="img"`, `<title>`, `<desc>` and a
+   `<figcaption>`, using the colours in `style.css`.
+2. Add it at the top of `blog/index.html`'s list (after `<!-- POSTS -->`).
+3. Add an `<entry>` at the top of `blog/feed.xml` and set its `<updated>`.
+4. Add its address to `sitemap.xml`.
+5. `python3 tools/make-og.py --post <slug> "<title>" "[NN] Design notes"`.
+6. `python3 -I tools/check-site.py` must print `site ok`. Preview with
+   `python3 -m http.server 8080` and open `http://localhost:8080/blog/`.

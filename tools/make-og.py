@@ -11,6 +11,12 @@ the drawn logo, logo.svg, rendered by sips.
 
 After regenerating, bump the ?v= on og:image and twitter:image in
 index.html: Slack, iMessage and X cache the old artwork against the old URL.
+
+A blog post's card (the logo small, the series label, the post's title):
+
+    python3 tools/make-og.py --post <slug> "<title>" "[01] Design notes"
+
+writes blog/<slug>/og.png; bump the ?v= in that post's og:image too.
 """
 import math
 import os
@@ -133,7 +139,65 @@ def build():
     return img.resize((W, H), Image.LANCZOS)
 
 
+def wrap(d, text, font, width):
+    lines, line = [], ""
+    for word in text.split():
+        trial = (line + " " + word).strip()
+        if line and d.textlength(trial, font=font) > width:
+            lines.append(line)
+            line = word
+        else:
+            line = trial
+    return lines + [line]
+
+
+def build_post(title, label):
+    w, h = W * SS, H * SS
+    img = Image.new("RGB", (w, h), INK)
+    for cx, cy, rx, ry, rgb, peak, stop in (
+        (0.15 * w, -0.15 * h, 0.60 * w, 0.40 * h * 2.2, AMBER, 0.24, 1.0),
+        (0.95 * w, 0.95 * h, 0.40 * w, 0.30 * h * 2.2, AQUA, 0.11, 1.0),
+    ):
+        tint, mask = radial((w, h), cx, cy, rx, ry, rgb, peak, stop)
+        img.paste(tint, (0, 0), mask)
+    d = ImageDraw.Draw(img, "RGBA")
+    left = int(0.075 * w)
+    with tempfile.TemporaryDirectory() as folder:
+        png = os.path.join(folder, "logo.png")
+        subprocess.run(["sips", "-s", "format", "png", os.path.join(ROOT, "logo.svg"), "--out", png],
+                       check=True, capture_output=True)
+        word = Image.open(png).convert("RGBA")
+        word.load()
+    word_h = int(0.05 * w)
+    word = word.resize((int(word.width * word_h / word.height), word_h), Image.LANCZOS)
+    img.paste(word, (left, int(0.11 * h)), word)
+    fsize = int(0.017 * w)
+    tracked(d, (left, int(0.36 * h)), label.upper(), mono(fsize), AMBER,
+            tracking=0.08 * fsize, anchor_center=False)
+    size = int(0.062 * w)
+    head = sf(size, "Semibold")
+    lines = wrap(d, title, head, int(0.85 * w))
+    while len(lines) > 3:
+        size = int(size * 0.9)
+        head = sf(size, "Semibold")
+        lines = wrap(d, title, head, int(0.85 * w))
+    y = int(0.44 * h)
+    for line in lines:
+        d.text((left, y), line, font=head, fill=(251, 241, 199))
+        y += int(size * 1.15)
+    tracked(d, (left, int(0.86 * h)), "THENOONLIGHT.COM/BLOG", mono(int(0.0165 * w)), FAINT,
+            tracking=0.16 * int(0.0165 * w), anchor_center=False)
+    return img.resize((W, H), Image.LANCZOS)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--post":
+        slug, title, label = sys.argv[2], sys.argv[3], sys.argv[4]
+        out = os.path.join(ROOT, "blog", slug, "og.png")
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        build_post(title, label).save(out, optimize=True)
+        print("wrote %s (%.0f KB)" % (out, os.path.getsize(out) / 1024))
+        sys.exit(0)
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "og.png")
     build().save(out, optimize=True)
     print("wrote %s (%.0f KB)" % (out, os.path.getsize(out) / 1024))
