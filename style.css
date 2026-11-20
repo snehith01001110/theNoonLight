@@ -611,25 +611,71 @@ svg.hovering .edge:not(.hot) { opacity: 0.12; }
 .g-pill:focus-visible rect { stroke: var(--c); stroke-width: 3; }
 .g-wait { fill: var(--faint); font: 500 11px var(--mono); }
 
-/* ── trust ──────────────────────────────────────────────── */
-.facts {
+/* ── more: four open columns, an amber tick on each top rule ── */
+.perks {
   list-style: none;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 36px 32px;
 }
-.facts li {
-  background: var(--card);
-  border: 1px solid var(--glass-edge);
-  border-radius: var(--r);
-  padding: 16px 18px;
+.perks li {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-strong);
+  color: var(--muted);
   font-size: 15px;
   line-height: 1.5;
-  color: var(--muted);
 }
-.facts b { display: block; margin-bottom: 4px; font-weight: 600; color: var(--bright); }
+.perks li::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 32px;
+  height: 2px;
+  background: var(--amber);
+  transition: width 0.45s var(--ease);
+}
+.perks svg { width: 26px; height: 26px; color: var(--amber); margin-bottom: 4px; }
+.perks b {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 21px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--bright);
+  text-wrap: balance;
+}
+.perks code { font-family: var(--mono); font-size: 0.86em; color: var(--paper); }
+@media (hover: hover) { .perks li:hover::before { width: 100%; } }
+
+/* ── trust: a ledger of claims ──────────────────────────── */
+.ledger { list-style: none; margin: 8px 0 0; padding: 0; border-top: 1px solid var(--line-strong); max-width: 920px; }
+.ledger li {
+  display: grid;
+  grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+  gap: 6px 36px;
+  align-items: baseline;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+.ledger b {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(24px, 2.8vw, 32px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--bright);
+  transition: color 0.25s;
+}
+.ledger li > span { color: var(--muted); font-size: 16px; line-height: 1.5; }
+@media (hover: hover) { .ledger li:hover b { color: var(--amber); } }
+@media (prefers-reduced-motion: reduce) { .perks li::before, .ledger b { transition: none; } }
 
 /* ── questions ──────────────────────────────────────────── */
 .faq { max-width: 760px; border-top: 1px solid var(--line); }
@@ -742,7 +788,7 @@ a, button, summary, .task, .term { -webkit-tap-highlight-color: transparent; }
   .terms { grid-template-columns: minmax(0, 1fr); }
   .term-out { height: 74px; transition: height 0.4s var(--ease); }
   .term.front .term-out { height: 214px; }
-  .facts { grid-template-columns: minmax(0, 1fr); }
+  .ledger li { grid-template-columns: minmax(0, 1fr); padding: 18px 0; }
 }
 
 @media (prefers-reduced-transparency: reduce) {

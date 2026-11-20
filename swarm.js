@@ -35,7 +35,7 @@ const SPEC = [
   [".ws-arrow", "block"], ["#ws-copies", "block"],
   [".term", "frame"], [".term-head", "block"], [".term-out", "block"],
   ["#git-panel", "frame"], ["#git", "block"],
-  [".facts li", "text"],
+  [".perks li", "text"], [".ledger li", "text"],
   [".faq details", "text"],
   [".chips li", "text"], [".steps li", "text"], [".center .btn", "button"], [".brew", "text"],
   ["footer .f-row > *", "text"], ["footer details", "text"], ["footer > p", "text"],
