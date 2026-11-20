@@ -103,3 +103,22 @@
   .prose { font-size: 17px; }
   .fig-panel { padding: 12px; }
 }
+
+/* inline SVG figures: the site's colours as classes, labels as text */
+.fig-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.fig-grid > div { min-width: 0; }
+.fig-narrow { max-width: 460px; margin-inline: auto; }
+svg .lbl { font-family: var(--mono); font-size: 13px; fill: var(--muted); }
+svg .lbl-b { font-family: var(--sans); font-size: 15px; font-weight: 600; fill: var(--bright); }
+svg .lbl-s { font-family: var(--mono); font-size: 12px; fill: var(--faint); }
+svg .ln { stroke: var(--line-strong); stroke-width: 1.5; fill: none; }
+svg .ln-amber { stroke: var(--amber); stroke-width: 2; fill: none; }
+svg .ln-dash { stroke: var(--faint); stroke-width: 1.5; stroke-dasharray: 4 4; fill: none; }
+svg .aqua { fill: var(--aqua); }
+svg .pink { fill: #d3869b; }
+svg .green { fill: var(--green); }
+svg .cream { fill: var(--paper); }
+svg .amber { fill: var(--amber); }
+svg .muted { fill: var(--muted); }
+svg .hollow { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+svg .on-amber { font-family: var(--mono); font-size: 13px; font-weight: 600; fill: var(--edge); }

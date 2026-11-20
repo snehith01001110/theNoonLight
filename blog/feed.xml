@@ -9,4 +9,12 @@
   <icon>https://thenoonlight.com/favicon.png</icon>
   <updated>2026-11-20T00:00:00Z</updated>
 <!-- ENTRIES: newest first -->
+  <entry>
+    <title>Agents don’t talk to each other</title>
+    <id>https://thenoonlight.com/blog/agents-dont-talk-to-each-other/</id>
+    <link rel="alternate" type="text/html" href="https://thenoonlight.com/blog/agents-dont-talk-to-each-other/"/>
+    <published>2026-11-20T00:00:00Z</published>
+    <updated>2026-11-20T00:00:00Z</updated>
+    <summary>Why Noon’s agents never message each other, what Noon tells them instead, and what our own runs did and didn’t show.</summary>
+  </entry>
 </feed>
