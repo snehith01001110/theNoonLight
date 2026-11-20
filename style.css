@@ -738,4 +738,5 @@ a, button, summary, .task, .term { -webkit-tap-highlight-color: transparent; }
 }
 
 /* PL27: the launch page */
-.hero .lede { max-width: 38rem; margin: .75rem auto 0; color: var(--muted, #a89984); font-size: 1.05rem; line-height: 1.5; }
+.hero .sub { margin-bottom: 18px; }
+.hero .lede { max-width: 38rem; margin: 0 0 32px; color: var(--muted, #a89984); font-size: 1.05rem; line-height: 1.5; }
