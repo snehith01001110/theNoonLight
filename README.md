@@ -10,8 +10,9 @@ Pages from this repository's `main` branch.
   ([snehithnayak.github.io/themes](https://github.com/snehith01001110/snehithnayak.github.io/tree/main/themes)),
   as tokens at the top of `style.css`. The three agents are the theme's aqua,
   pink and green (`COLORS` in `demos.js`); amber is kept for approvals.
-- `fonts/`: JetBrains Mono, self-hosted (latin subset, SIL OFL in
-  `fonts/OFL.txt`), so the page loads nothing from other sites.
+- `fonts/`: Bricolage Grotesque (headlines), Inter (text) and Martian Mono
+  (labels and buttons), self-hosted (Google Fonts' latin subsets, SIL OFL in
+  `fonts/OFL-*.txt`), so the page loads nothing from other sites.
 - `icon.png`, `favicon.svg`, `favicon.png`, `favicon.ico`, `logo.svg`: Noon's
   logo, drawn by `scripts/render-brand.swift` in the app's repository (pass it
   this folder); its `docs/BRAND.md` is the brand guide. Don't edit them by hand.

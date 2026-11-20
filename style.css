@@ -28,9 +28,9 @@
   --warn-bg: #352712;             /* theme: warning.background */
   --warn-edge: #75551f;           /* theme: warning.border */
   --ok-edge: #395334;             /* theme: created.border */
-  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
-  --display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Helvetica, Arial, sans-serif;
+  --display: "Bricolage Grotesque", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --maxw: 1040px;
   --gutter: max(clamp(16px, 5vw, 56px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -39,14 +39,31 @@
   --mark: rgba(125, 174, 163, 0.55);  /* crop marks on the big frames */
 }
 
-/* JetBrains Mono, self-hosted (SIL OFL 1.1, fonts/OFL.txt): one variable
-   file covers weights 400–600; the range is Google Fonts' latin subset. */
+/* Self-hosted (SIL OFL 1.1, fonts/OFL-*.txt), Google Fonts' latin subsets, each one
+   variable file: Bricolage Grotesque for headlines (weights 200–800, optical size
+   12–96), Inter for text (100–900), Martian Mono for labels and buttons (100–800). */
 @font-face {
-  font-family: "JetBrains Mono";
+  font-family: "Bricolage Grotesque";
   font-style: normal;
-  font-weight: 400 600;
+  font-weight: 200 800;
   font-display: swap;
-  src: url("fonts/jetbrains-mono-latin.woff2") format("woff2");
+  src: url("fonts/bricolage-grotesque-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/inter-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Martian Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("fonts/martian-mono-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
@@ -138,10 +155,10 @@ button { font: inherit; color: inherit; }
 .hero h1 .logo { display: block; width: auto; max-width: 100%; aspect-ratio: 1134 / 256; height: clamp(44px, 7vw, 72px); filter: drop-shadow(0 12px 30px rgba(216, 166, 87, 0.18)); }
 .sub {
   font-family: var(--display);
-  font-weight: 600;
-  font-size: clamp(28px, 4.4vw, 50px);
-  line-height: 1.06;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  font-size: clamp(34px, 6vw, 60px);
+  line-height: 1;
+  letter-spacing: -0.04em;
   color: var(--bright);
   max-width: 20ch;
   margin: 0 0 34px;
@@ -259,9 +276,9 @@ section.block { margin-top: clamp(64px, 9vw, 104px); padding-top: 26px; border-t
 .head .eye { margin-bottom: 14px; }
 .head h2 {
   font-family: var(--display);
-  font-weight: 600;
-  font-size: clamp(26px, 3.4vw, 36px);
-  letter-spacing: -0.025em;
+  font-weight: 800;
+  font-size: clamp(28px, 3.6vw, 38px);
+  letter-spacing: -0.035em;
   line-height: 1.1;
   margin: 0 0 8px;
   color: var(--bright);

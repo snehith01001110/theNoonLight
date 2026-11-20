@@ -413,7 +413,7 @@ function start(main) {
   function chip(x, y, text, bg, fg, alpha) {
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = "500 10px 'JetBrains Mono', ui-monospace, Menlo, monospace";
+    ctx.font = "500 10px 'Martian Mono', ui-monospace, Menlo, monospace";
     const w = ctx.measureText(text).width + 10;
     ctx.fillStyle = bg;
     ctx.beginPath();
