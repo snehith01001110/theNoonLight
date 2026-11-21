@@ -15,7 +15,7 @@
 .blog-head nav a[aria-current] { color: var(--bright); }
 @media (hover: hover) { .blog-head nav a:hover { color: var(--aqua); } }
 
-.label {
+.bl-label {
   font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--amber); margin: 0 0 14px;
 }
@@ -64,7 +64,7 @@
 /* callouts: what we measured, and its limits */
 .callout { border: 1px solid var(--warn-edge); background: var(--warn-bg); border-radius: var(--r); padding: 16px 18px; margin: 1.6em 0; }
 .callout > :last-child { margin-bottom: 0; }
-.callout .label { margin-bottom: 8px; }
+.callout .bl-label { margin-bottom: 8px; }
 
 /* tables scroll sideways on a phone */
 .table-scroll { overflow-x: auto; margin: 2em 0; border: 1px solid var(--line); border-radius: var(--r); }
@@ -86,7 +86,7 @@
 .posts { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line); }
 .posts li { border-bottom: 1px solid var(--line); }
 .posts a { display: block; padding: 22px 0; text-decoration: none; }
-.posts .num { font-family: var(--mono); font-size: 12px; color: var(--amber); }
+.posts .bl-num { font-family: var(--mono); font-size: 12px; color: var(--amber); }
 .posts h2 { font-family: var(--display); font-weight: 600; color: var(--bright); font-size: 26px; line-height: 1.2; margin: 6px 0 8px; letter-spacing: -0.02em; }
 .posts p { margin: 0 0 8px; color: var(--paper); }
 .posts .meta { font-family: var(--mono); font-size: 12px; color: var(--faint); }
@@ -122,3 +122,16 @@ svg .amber { fill: var(--amber); }
 svg .muted { fill: var(--muted); }
 svg .hollow { fill: none; stroke: var(--muted); stroke-width: 1.5; }
 svg .on-amber { font-family: var(--mono); font-size: 13px; font-weight: 600; fill: var(--edge); }
+
+/* Text keeps its measure; tables can run wider than it, centred on the page. */
+.prose { max-width: none; }
+.prose > p, .prose > ul, .prose > ol, .prose > h2, .prose > h3 { max-width: 68ch; }
+.prose .fig-wide { max-width: 560px; }
+.table-scroll.wide {
+  width: min(1000px, calc(100vw - 2 * var(--gutter)));
+  margin-left: calc(50% - min(500px, 50vw - var(--gutter)));
+}
+.table-scroll.wide table { min-width: 720px; }
+.prose .wide th, .prose .wide td { padding: 12px 16px; }
+.prose .wide tbody td:nth-child(2), .prose .wide tbody td:nth-child(3), .prose .wide tbody td:nth-child(4) { white-space: nowrap; }
+.prose .wide thead th { white-space: nowrap; }
