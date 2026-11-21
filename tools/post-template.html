@@ -27,7 +27,8 @@
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="alternate" type="application/atom+xml" title="Noon: Design notes" href="/blog/feed.xml">
 <link rel="stylesheet" href="/style.css?v=12">
-<link rel="stylesheet" href="/blog/blog.css?v=1">
+<link rel="stylesheet" href="/blog/blog.css?v=2">
+<script src="/blog/blog.js?v=1" defer></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -45,12 +46,14 @@
 </script>
 </head>
 <body>
-<div class="wrap blog">
+<div class="wrap blog post">
   <header class="blog-head">
     <a class="home" href="/"><img src="/logo.svg" alt="Noon" width="97" height="22"></a>
     <nav><a href="/blog/">Blog</a><a href="/">Download</a></nav>
   </header>
 
+  <div class="post-grid">
+  <aside class="toc-col"><nav class="toc" data-toc aria-label="On this page" hidden></nav></aside>
   <main>
     <article>
       <p class="bl-label">[{{NUMBER}}] Design notes</p>
@@ -73,6 +76,7 @@
     </nav>
     <p class="post-cta">Noon runs Claude Code and Codex side by side on your Mac. <a href="/">Download it</a>.</p>
   </main>
+  </div>
 
   <footer>
     <div class="f-row">

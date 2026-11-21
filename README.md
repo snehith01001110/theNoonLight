@@ -68,6 +68,10 @@ build step; every page loads only this site's files.
    (words ÷ 230), the article (each `h2` with an `id` and an
    `<a class="anchor" href="#id">#</a>`), the references, and the previous and
    next links (also add a "next" link to the post before it).
+   The "On this page" list beside a post (wide screens) is built by
+   `blog/blog.js` from the article's `h2`s; nothing to write. A table wider
+   than the text takes `class="table-scroll wide"`, a `<colgroup>` and a
+   `data-label` on each `<td>` (its column's name, shown on phones).
    Figures are inline SVG with `role="img"`, `<title>`, `<desc>` and a
    `<figcaption>`, using the colours in `style.css`.
 2. Add it at the top of `blog/index.html`'s list (after `<!-- POSTS -->`).

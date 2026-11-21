@@ -26,7 +26,8 @@
 <link rel="apple-touch-icon" href="/icon.png">
 <link rel="alternate" type="application/atom+xml" title="Noon: Design notes" href="/blog/feed.xml">
 <link rel="stylesheet" href="/style.css?v=12">
-<link rel="stylesheet" href="/blog/blog.css?v=1">
+<link rel="stylesheet" href="/blog/blog.css?v=2">
+<script src="/blog/blog.js?v=1" defer></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -44,12 +45,14 @@
 </script>
 </head>
 <body>
-<div class="wrap blog">
+<div class="wrap blog post">
   <header class="blog-head">
     <a class="home" href="/"><img src="/logo.svg" alt="Noon" width="97" height="22"></a>
     <nav><a href="/blog/">Blog</a><a href="/">Download</a></nav>
   </header>
 
+  <div class="post-grid">
+  <aside class="toc-col"><nav class="toc" data-toc aria-label="On this page" hidden></nav></aside>
   <main>
     <article>
       <p class="bl-label">[01] Design notes</p>
@@ -156,13 +159,14 @@
 <p>We tried holding edits ourselves. When an agent could choose where to make its change, Noon held three of its edits once (all Codex); one changed course and two made the same edit again. When the person had asked for the edit, both held agents made it again, as told <sup><a href="#ref-6">[6]</a></sup><!-- G5 -->. Holding the edit you asked for is the wrong default, so Noon tells and never blocks.</p>
 <div class="table-scroll wide" role="region" aria-label="Comparison table" tabindex="0"><table>
 <caption>Ways to coordinate agents on one repository. — means not measured.</caption>
+<colgroup><col class="c1"><col class="c2"><col class="c3"><col class="c4"><col class="c5"></colgroup>
 <thead><tr><th scope="col">Approach</th><th scope="col">Both agents</th><th scope="col">Token cost</th><th scope="col">Agents stay parallel</th><th scope="col">What goes wrong</th></tr></thead><tbody>
-<tr><th scope="row">Agents message each other</th><td>No shared channel</td><td>—</td><td>Yes</td><td>Channels jam; fewer conflicts, no more success <sup><a href="#ref-8">[8]</a></sup></td></tr>
-<tr><th scope="row">Agents claim files first</th><td>—</td><td>—</td><td>Mostly not: 96.7% of runs took turns <sup><a href="#ref-21">[21]</a></sup></td><td>Undeclared scope refused <sup><a href="#ref-21">[21]</a></sup></td></tr>
-<tr><th scope="row">Noon holds the edit</th><td>Yes</td><td>+1 request a hold <sup><a href="#ref-6">[6]</a></sup></td><td>—</td><td>Edit remade in 4 of 5 holds <sup><a href="#ref-6">[6]</a></sup></td></tr>
-<tr><th scope="row">One shared checkout</th><td>Yes</td><td>—</td><td>Yes</td><td>Overwrites <sup><a href="#ref-4">[4]</a></sup></td></tr>
-<tr><th scope="row">No coordination</th><td>Yes</td><td>None</td><td>Yes</td><td>27.67% of unmerged agent pull requests conflict <sup><a href="#ref-1">[1]</a></sup></td></tr>
-<tr class="ours"><th scope="row">Noon: workspaces, facts, notes, forecast</th><td>Yes</td><td>~30% more input, mostly cached <sup><a href="#ref-6">[6]</a></sup></td><td>Yes</td><td>Conflicts still happen; forecast only for pairs sharing code <sup><a href="#ref-3">[3]</a></sup>; clean merges can break <sup><a href="#ref-20">[20]</a></sup></td></tr>
+<tr><th scope="row">Agents message each other</th><td data-label="Both agents">No shared channel</td><td data-label="Token cost">—</td><td data-label="Agents stay parallel">Yes</td><td data-label="What goes wrong">Channels jam; fewer conflicts, no more success <sup><a href="#ref-8">[8]</a></sup></td></tr>
+<tr><th scope="row">Agents claim files first</th><td data-label="Both agents">—</td><td data-label="Token cost">—</td><td data-label="Agents stay parallel">Mostly not: 96.7% of runs took turns <sup><a href="#ref-21">[21]</a></sup></td><td data-label="What goes wrong">Undeclared scope refused <sup><a href="#ref-21">[21]</a></sup></td></tr>
+<tr><th scope="row">Noon holds the edit</th><td data-label="Both agents">Yes</td><td data-label="Token cost">+1 request a hold <sup><a href="#ref-6">[6]</a></sup></td><td data-label="Agents stay parallel">—</td><td data-label="What goes wrong">Edit remade in 4 of 5 holds <sup><a href="#ref-6">[6]</a></sup></td></tr>
+<tr><th scope="row">One shared checkout</th><td data-label="Both agents">Yes</td><td data-label="Token cost">—</td><td data-label="Agents stay parallel">Yes</td><td data-label="What goes wrong">Overwrites <sup><a href="#ref-4">[4]</a></sup></td></tr>
+<tr><th scope="row">No coordination</th><td data-label="Both agents">Yes</td><td data-label="Token cost">None</td><td data-label="Agents stay parallel">Yes</td><td data-label="What goes wrong">27.67% of unmerged agent pull requests conflict <sup><a href="#ref-1">[1]</a></sup></td></tr>
+<tr class="ours"><th scope="row">Noon: workspaces, facts, notes, forecast</th><td data-label="Both agents">Yes</td><td data-label="Token cost">~30% more input, mostly cached <sup><a href="#ref-6">[6]</a></sup></td><td data-label="Agents stay parallel">Yes</td><td data-label="What goes wrong">Conflicts still happen; forecast only for pairs sharing code <sup><a href="#ref-3">[3]</a></sup>; clean merges can break <sup><a href="#ref-20">[20]</a></sup></td></tr>
 </tbody></table></div>
 <h2 id="what-we-measured">What we measured, and what it didn’t show <a class="anchor" href="#what-we-measured" aria-label="Link to this section">#</a></h2>
 <figure>
@@ -222,6 +226,7 @@
     </nav>
     <p class="post-cta">Noon runs Claude Code and Codex side by side on your Mac. <a href="/">Download it</a>.</p>
   </main>
+  </div>
 
   <footer>
     <div class="f-row">
