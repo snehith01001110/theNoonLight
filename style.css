@@ -139,6 +139,30 @@ button { font: inherit; color: inherit; }
   padding-inline: var(--gutter);
 }
 
+/* ── blog links ─────────────────────────────────────────── */
+.topnav { position: absolute; top: 22px; right: var(--gutter); z-index: 3; }
+.topnav a {
+  font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--paper); text-decoration: none; padding: 8px 14px;
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.topnav a:hover, .topnav a:focus-visible { color: var(--amber); border-color: var(--amber); }
+.hero .news {
+  display: inline-flex; align-items: center; gap: 10px; max-width: 100%;
+  margin: 0 0 22px; padding: 6px 14px 6px 6px;
+  font-size: 14px; color: var(--paper); text-decoration: none;
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  background: rgba(216, 166, 87, 0.06);
+  transition: border-color 0.2s, background 0.2s;
+}
+.hero .news .tag {
+  flex: none; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--edge); background: var(--amber); border-radius: 999px; padding: 4px 9px;
+}
+.hero .news .arr { flex: none; color: var(--amber); transition: transform 0.2s var(--ease); }
+.hero .news:hover, .hero .news:focus-visible { border-color: var(--amber); background: rgba(216, 166, 87, 0.12); }
+.hero .news:hover .arr { transform: translateX(3px); }
 /* ── hero ───────────────────────────────────────────────── */
 .eye {
   font-family: var(--mono);
@@ -805,3 +829,10 @@ a, button, summary, .task, .term { -webkit-tap-highlight-color: transparent; }
 .hero .lede { max-width: 38rem; margin: 0 0 32px; color: var(--muted, #a89984); font-size: 1.05rem; line-height: 1.5; }
 .fine a.notes { color: var(--amber); text-decoration: underline; text-decoration-color: rgba(216, 166, 87, .45); text-underline-offset: 3px; }
 .fine a.notes:hover, .fine a.notes:focus-visible { color: var(--bright); text-decoration-color: currentColor; }
+
+/* After .hero, so the room for the Blog link wins on phones. */
+@media (max-width: 760px) {
+  .topnav { top: 14px; }
+  .hero { padding-top: 64px; }
+  .hero .news { font-size: 13px; }
+}
