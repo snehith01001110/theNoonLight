@@ -25,7 +25,7 @@ const NAMES = ["Claude Code", "Codex"];
 // a container that appears before the layers inside it.
 const SPEC = [
   [".eye", "text"], [".hero h1 .logo", "image"],
-  [".sub", "text"], [".hero .btn", "button"], [".hero .fine", "text"], [".works", "text"],
+  [".sub", "text"], [".hero .lede", "text"], [".hero .btn", "button"], [".hero .fine", "text"], [".works", "text"],
   [".head h2", "text"], [".head p", "text"],
   [".window", "frame"], [".titlebar", "block"], [".side .label", "block"], [".task", "block"],
   [".changes", "frame"], [".ch-title", "block"], [".status", "block"],
@@ -37,7 +37,7 @@ const SPEC = [
   ["#git-panel", "frame"], ["#git", "block"],
   [".perks li", "text"], [".ledger li", "text"],
   [".faq details", "text"],
-  [".chips li", "text"], [".steps li", "text"], [".center .btn", "button"], [".brew", "text"],
+  [".chips li", "text"], [".steps li", "text"], [".center .btn", "button"], [".center .fine", "text"],
   ["footer .f-row > *", "text"], ["footer details", "text"], ["footer > p", "text"],
 ];
 
