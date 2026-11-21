@@ -24,7 +24,7 @@ const NAMES = ["Claude Code", "Codex"];
 // from a blur (the live demos, whose text is rewritten by demos.js); frame is
 // a container that appears before the layers inside it.
 const SPEC = [
-  [".topnav a", "text"], [".hero .news", "text"],
+  [".topnav a", "text"],
   [".eye", "text"], [".hero h1 .logo", "image"],
   [".sub", "text"], [".hero .lede", "text"], [".hero .btn", "button"], [".hero .fine", "text"], [".works", "text"],
   [".head h2", "text"], [".head p", "text"],
