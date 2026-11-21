@@ -140,15 +140,19 @@ button { font: inherit; color: inherit; }
 }
 
 /* ── site links ─────────────────────────────────────────── */
-.topnav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding-top: 22px; }
-.topnav + .hero { padding-top: clamp(28px, 4vw, 48px); }
-.topnav a {
-  font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--paper); text-decoration: none; padding: 8px 14px;
-  border: 1px solid var(--line-strong); border-radius: 999px;
-  transition: color 0.2s, border-color 0.2s;
+.topnav {
+  display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px 26px;
+  padding-top: calc(22px + env(safe-area-inset-top, 0px));
+  font-family: var(--mono); font-size: 12px;
 }
-.topnav a:hover, .topnav a:focus-visible { color: var(--amber); border-color: var(--amber); }
+.topnav + .hero { padding-top: clamp(28px, 4vw, 48px); }
+.topnav a { color: var(--muted); text-decoration: none; padding: 6px 0; transition: color 0.2s; }
+.topnav .ext { display: inline-block; margin-left: 4px; color: var(--faint); transition: color 0.2s, transform 0.2s var(--ease); }
+.topnav a:focus-visible { color: var(--bright); }
+@media (hover: hover) {
+  .topnav a:hover { color: var(--bright); }
+  .topnav a:hover .ext { color: var(--amber); transform: translate(1px, -1px); }
+}
 
 /* ── hero ───────────────────────────────────────────────── */
 .eye {
@@ -818,6 +822,5 @@ a, button, summary, .task, .term { -webkit-tap-highlight-color: transparent; }
 .fine a.notes:hover, .fine a.notes:focus-visible { color: var(--bright); text-decoration-color: currentColor; }
 
 @media (max-width: 760px) {
-  .topnav { gap: 6px; padding-top: 14px; }
-  .topnav a { font-size: 11px; letter-spacing: 0.06em; padding: 6px 10px; }
+  .topnav { gap: 6px 20px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
 }
