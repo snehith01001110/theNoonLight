@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0e0c">
+<meta name="color-scheme" content="dark">
+<title>Why typing over SSH got slow, and what 0.5.1 changes · Noon</title>
+<meta name="description" content="A bit of bookkeeping added in 0.4.1 held up terminals on big shared Linux machines. What it did, and how 0.5.1 gets it out of the way.">
+<link rel="canonical" href="https://thenoonlight.com/blog/slow-terminal-over-ssh/">
+<meta property="og:site_name" content="Noon">
+<meta property="og:title" content="Why typing over SSH got slow, and what 0.5.1 changes">
+<meta property="og:description" content="A bit of bookkeeping added in 0.4.1 held up terminals on big shared Linux machines. What it did, and how 0.5.1 gets it out of the way.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://thenoonlight.com/blog/slow-terminal-over-ssh/">
+<meta property="og:image" content="https://thenoonlight.com/blog/slow-terminal-over-ssh/og.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="article:published_time" content="2026-11-23">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Why typing over SSH got slow, and what 0.5.1 changes">
+<meta name="twitter:description" content="A bit of bookkeeping added in 0.4.1 held up terminals on big shared Linux machines. What it did, and how 0.5.1 gets it out of the way.">
+<meta name="twitter:image" content="https://thenoonlight.com/blog/slow-terminal-over-ssh/og.png?v=1">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="64x64">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" sizes="any">
+<link rel="apple-touch-icon" href="/icon.png">
+<link rel="alternate" type="application/atom+xml" title="Noon: Design notes" href="/blog/feed.xml">
+<link rel="stylesheet" href="/style.css?v=12">
+<link rel="stylesheet" href="/blog/blog.css?v=2">
+<script src="/blog/blog.js?v=1" defer></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Why typing over SSH got slow, and what 0.5.1 changes",
+  "description": "A bit of bookkeeping added in 0.4.1 held up terminals on big shared Linux machines. What it did, and how 0.5.1 gets it out of the way.",
+  "datePublished": "2026-11-23",
+  "dateModified": "2026-11-23",
+  "author": { "@type": "Person", "name": "Snehith Nayak" },
+  "publisher": { "@type": "Organization", "name": "Noon", "url": "https://thenoonlight.com/" },
+  "image": "https://thenoonlight.com/blog/slow-terminal-over-ssh/og.png",
+  "url": "https://thenoonlight.com/blog/slow-terminal-over-ssh/",
+  "isPartOf": { "@type": "Blog", "name": "Design notes", "url": "https://thenoonlight.com/blog/" }
+}
+</script>
+</head>
+<body>
+<div class="wrap blog post">
+  <header class="blog-head">
+    <a class="home" href="/"><img src="/logo.svg" alt="Noon" width="97" height="22"></a>
+    <nav><a href="/blog/">Blog</a><a href="/">Download</a></nav>
+  </header>
+
+  <div class="post-grid">
+  <aside class="toc-col"><nav class="toc" data-toc aria-label="On this page" hidden></nav></aside>
+  <main>
+    <article>
+      <p class="bl-label">[02] Design notes</p>
+      <h1>Why typing over SSH got slow, and what 0.5.1 changes</h1>
+      <p class="standfirst">Noon 0.5.1 is out. Most of it is one fix, for terminals on remote machines that got slow after 0.4.1.</p>
+      <p class="byline"><span>Snehith Nayak</span><span><time datetime="2026-11-23">November 23, 2026</time></span><span>2 min read</span></p>
+
+      <div class="prose">
+<h2 id="what-happened">What happened <a class="anchor" href="#what-happened" aria-label="Link to this section">#</a></h2>
+<p>After 0.5.0 shipped, typing in a task’s terminal on a remote Linux machine got slow enough to be unusable. Keys showed up late, and resizing, resuming and scrolling dragged too. The machine was a big workstation that a lot of people share. It had also been faster a few releases earlier, which turned out to be the useful clue.</p>
+<h2 id="what-0-4-1-added">What 0.4.1 added <a class="anchor" href="#what-0-4-1-added" aria-label="Link to this section">#</a></h2>
+<p>In 0.4.1 we made Stop end the programs an agent starts, like a dev server it leaves running in the background. To know what those are, the small helper Noon runs on each machine keeps a record for every task. It checked the task’s own process tree twice a second, and every five seconds it went through every process on the machine looking for ones working inside the task’s folder <sup><a href="#ref-1">[1]</a></sup>.</p>
+<p>That ran on the same loop that carries the terminal’s bytes. On a laptop, or on the test machines we use, it takes almost no time, so nothing looked wrong. A shared workstation has far more processes to go through, and for each one the helper read <code>/proc/stat</code> again to get the machine’s boot time, which is the same number every time. While it did all that, your keystrokes waited.</p>
+<h2 id="the-fix">The fix <a class="anchor" href="#the-fix" aria-label="Link to this section">#</a></h2>
+<p>0.5.1 moves that bookkeeping onto a thread of its own, so the terminal never waits for it. It reads the boot time once. And it only looks at your own processes: anything your agent started runs as you, so other people’s programs were never candidates (running as root, it still looks at everything). Stop ends the same things it did before <sup><a href="#ref-1">[1]</a></sup>.</p>
+<h2 id="not-measured">What we haven’t measured <a class="anchor" href="#not-measured" aria-label="Link to this section">#</a></h2>
+<p>We couldn’t reproduce the slowness here, because our test machines don’t have hundreds of other people’s processes on them. So this is the most likely cause, not a proven one. If typing over SSH is still slow for you on 0.5.1, choose Help → Troubleshooting → Save Diagnostics while it’s slow and send us the file, or <a href="https://github.com/snehith01001110/noon-releases/issues">open an issue</a>.</p>
+<h2 id="getting-it">Getting the fix onto a remote machine <a class="anchor" href="#getting-it" aria-label="Link to this section">#</a></h2>
+<p>Updating Noon on your Mac isn’t enough on its own. The helper on the remote machine lives in your <code>~/.noon</code> (no admin needed), and it only replaces itself when nothing is running there, so an update never cuts off a working agent. Stop that machine’s tasks, close Noon’s terminals on it, reconnect, then Resume each task. The agents carry on in the same conversations.</p>
+<h2 id="also">Also in 0.5.1 <a class="anchor" href="#also" aria-label="Link to this section">#</a></h2>
+<ul><li>A task merged through a pull request on GitHub now reads “In origin/main” after you fetch, instead of looking unmerged until you pull.</li><li>Claude Code options that would take an agent out of Noon’s terminal or its workspace, like <code>--worktree</code>, <code>--tmux</code> or <code>--teleport</code>, are refused when a task starts.</li><li>The suggested merge order is gone from the Agents list and the Repository pane.</li><li>There’s no menu bar icon anymore. Everything it had is in the regular menus.</li><li>New Terminal opens in the project’s folder, not in a task’s workspace.</li><li>Closing the last terminal no longer shows a “No such terminal” alert.</li><li>The map stays still while you move or resize the window, and a project hidden from the map looks hidden in the Projects list.</li></ul>
+<p>The full list is in the <a href="https://github.com/snehith01001110/noon-releases/releases/tag/v0.5.1">release notes</a> <sup><a href="#ref-2">[2]</a></sup>. Noon → Check for Updates… offers 0.5.1 from 0.5.0 and earlier.</p>
+        <h2 id="references">References</h2>
+        <ol class="refs">
+<li id="ref-1">Noon’s code: the runtime’s Stop record before and after 0.5.1<span class="kind">Noon’s own, unpublished</span></li>
+<li id="ref-2">Noon 0.5.1 release notes. <a href="https://github.com/snehith01001110/noon-releases/releases/tag/v0.5.1">github.com/snehith01001110/noon-releases/releases/tag/v0.5.1</a><span class="kind">release notes</span></li>
+        </ol>
+      </div>
+    </article>
+
+    <nav class="post-nav" aria-label="More posts">
+      <a href="/blog/agents-dont-talk-to-each-other/">← How Noon’s agents learn about each other</a>
+      <a href="/blog/">All posts →</a>
+    </nav>
+    <p class="post-cta">Noon runs Claude Code and Codex side by side on your Mac. <a href="/">Download it</a>.</p>
+  </main>
+  </div>
+
+  <footer>
+    <div class="f-row">
+      <a href="mailto:snehithn5@gmail.com">snehithn5@gmail.com</a>
+      <a href="https://github.com/snehith01001110/noon-releases/issues">Issues</a>
+      <a href="/blog/">Blog</a>
+      <a href="/blog/feed.xml">Feed</a>
+      <a href="https://github.com/snehith01001110/noon-releases/blob/main/LICENSE">License</a>
+      <span>© 2026 Snehith Nayak</span>
+    </div>
+    <p>This page sets no cookies, runs no analytics and loads nothing from other sites.</p>
+  </footer>
+</div>
+</body>
+</html>
